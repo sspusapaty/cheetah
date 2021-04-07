@@ -152,7 +152,7 @@ static void move_bit(int cpu, cpu_set_t *to, cpu_set_t *from) {
 }
 #endif
 
-static void threads_init(global_state *g) {
+static void threads_init(global_state *g, int boss_cpu) {
     /* TODO: Mac OS has a better interface allowing the application
        to request that two threads run as far apart as possible by
        giving them distinct "affinity tags". */
@@ -205,7 +205,7 @@ static void threads_init(global_state *g) {
        groups of floor(worker count / core count) CPUs.
        Core count greater than worker count, do not bind workers to CPUs.
        Otherwise, bind workers to single CPUs. */
-    int cpu = 0;
+    int cpu = boss_cpu;
     int group_size = 1;
     int step_in = 1, step_out = 1;
 
@@ -305,8 +305,8 @@ void __cilkrts_internal_set_force_reduce(unsigned int force_reduce) {
 
 // Start the Cilk workers in g, for example, by creating their underlying
 // Pthreads.
-static void __cilkrts_start_workers(global_state *g) {
-    threads_init(g);
+static void __cilkrts_start_workers(global_state *g, int boss_cpu) {
+    threads_init(g, boss_cpu);
     g->workers_started = true;
 }
 
@@ -336,12 +336,12 @@ static void __cilkrts_stop_workers(global_state *g) {
 
 // Setup runtime structures to start a new Cilkified region.  Executed by the
 // Cilkifying thread in cilkify().
-void invoke_cilkified_root(global_state *g, __cilkrts_stack_frame *sf) {
+void invoke_cilkified_root(global_state *g, __cilkrts_stack_frame *sf, int boss_cpu) {
     CILK_ASSERT_G(!__cilkrts_get_tls_worker());
 
     // Start the workers if necessary
     if (!g->workers_started)
-        __cilkrts_start_workers(g);
+        __cilkrts_start_workers(g, boss_cpu);
 
     // Mark the root closure as not initialized
     g->root_closure_initialized = false;
