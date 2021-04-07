@@ -1,6 +1,6 @@
 # CMake build for Cheetah.
 
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.4.3)
 
 if(POLICY CMP0068)
   cmake_policy(SET CMP0068 NEW)
@@ -75,10 +75,7 @@ if (NOT CHEETAH_ENABLE_SHARED AND NOT CHEETAH_ENABLE_STATIC)
 endif()
 
 # Target options --------------------------------------------------------------
-
-# Default minimum OSX version to support, if
-# CMAKE_OSX_DEPLOYMENT_TARGET is not specified
-set(CHEETAH_MIN_OSX_VERSION 10.14)
+set(CHEETAH_MIN_OSX_VERSION 10.9)
 
 #===============================================================================
 # Configure System
@@ -131,14 +128,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CHEETAH_LIBRARY_DIR})
 set(CHEETAH_C_FLAGS "")
 set(CHEETAH_CXX_FLAGS "")
 set(CHEETAH_COMPILE_FLAGS "")
+if (APPLE)
+  list(APPEND CHEETAH_COMPILE_FLAGS -mmacosx-version-min=${CHEETAH_MIN_OSX_VERSION})
+endif()
 set(CHEETAH_COMPILE_DEFS "")
 set(CHEETAH_LINK_FLAGS "")
 set(CHEETAH_LIBRARIES "")
-
-if (APPLE AND NOT CMAKE_OSX_DEPLOYMENT_TARGET)
-  list(APPEND CHEETAH_COMPILE_FLAGS -mmacosx-version-min=${CHEETAH_MIN_OSX_VERSION})
-  list(APPEND CHEETAH_LINK_FLAGS -mmacosx-version-min=${CHEETAH_MIN_OSX_VERSION})
-endif()
 
 # Include macros for adding and removing cheetah flags.
 include(HandleCheetahFlags)
@@ -170,10 +165,6 @@ endif()
 
 # Configure compiler.
 include(config-ix)
-
-if (APPLE AND CHEETAH_HAS_APP_EXTENSION)
-  list(APPEND CHEETAH_LINK_FLAGS "-fapplication-extension")
-endif()
 
 if (CHEETAH_USE_COMPILER_RT)
   list(APPEND CHEETAH_LINK_FLAGS "--rtlib=compiler-rt")
@@ -219,6 +210,6 @@ add_subdirectory(runtime)
 
 if (CHEETAH_INCLUDE_TESTS)
   # TODO: Set up CMake for Cheetah tests.
-  # add_subdirectory(handcomp_test)
+  add_subdirectory(handcomp_test)
   # add_subdirectory(bench)
 endif()

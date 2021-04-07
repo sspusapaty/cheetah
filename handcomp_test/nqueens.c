@@ -10,7 +10,6 @@
 #include "../runtime/cilk2c_inlined.c"
 #include "ktiming.h"
 
-extern size_t ZERO;
 void __attribute__((weak)) dummy(void *p) { return; }
 
 // int * count;

@@ -15,7 +15,6 @@
 #define TRUE 1
 #define FALSE 0
 
-extern size_t ZERO;
 void __attribute__((weak)) dummy(void *p) { return; }
 
 unsigned int randomSeed = 1;

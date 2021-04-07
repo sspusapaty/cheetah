@@ -31,7 +31,6 @@ int fib(int n) {
 }
 */
 
-extern size_t ZERO;
 void __attribute__((weak)) dummy(void *p) { return; }
 
 static void __attribute__ ((noinline)) fib_spawn_helper(int *x, int n); 

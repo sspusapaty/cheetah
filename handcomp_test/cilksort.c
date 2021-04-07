@@ -63,7 +63,6 @@
 #include "ktiming.h"
 #include "getoptions.h"
 
-extern size_t ZERO;
 void __attribute__((weak)) dummy(void *p) { return; }
 
 #ifndef TIMING_COUNT
