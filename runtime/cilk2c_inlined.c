@@ -180,6 +180,40 @@ __cilkrts_enter_frame(__cilkrts_stack_frame *sf) {
 #endif
 }
 
+__attribute__((always_inline)) void
+__enter_cilk_region(global_state *g, __cilkrts_stack_frame *sf, int boss_cpu) {
+    __cilkrts_worker *w = __cilkrts_get_tls_worker();
+    sf->flags = 0;
+    // CILK_ASSERT(w, NULL == w) TODO: make a valid assert
+    cilkify_with_core(default_cilkrts, sf, boss_cpu);
+    w = __cilkrts_get_tls_worker();
+    cilkrts_alert(CFRAME, w, "__cilkrts_enter_frame %p", (void *)sf);
+
+    sf->magic = frame_magic;
+    sf->call_parent = w->current_stack_frame;
+    atomic_store_explicit(&sf->worker, w, memory_order_relaxed);
+    w->current_stack_frame = sf;
+    // WHEN_CILK_DEBUG(sf->magic = CILK_STACKFRAME_MAGIC);
+
+#ifdef ENABLE_CILKRTS_PEDIGREE
+    // Pedigree maintenance.
+    if (sf->call_parent != NULL && !(sf->flags & CILK_FRAME_LAST)) {
+        sf->pedigree.rank = sf->call_parent->rank++;
+        sf->pedigree.parent = &(sf->call_parent->pedigree);
+        sf->dprng_depth = sf->call_parent->dprng_depth + 1;
+        sf->call_parent->dprng_dotproduct = __cilkrts_dprng_sum_mod_p(
+            sf->call_parent->dprng_dotproduct,
+            dprng_m_array[sf->call_parent->dprng_depth]);
+        sf->dprng_dotproduct = sf->call_parent->dprng_dotproduct;
+    } else {
+        sf->pedigree.rank = 0;
+        sf->pedigree.parent = NULL;
+        sf->dprng_depth = 0;
+        sf->dprng_dotproduct = dprng_m_X;
+    }
+    sf->rank = 0;
+#endif
+}
 // Enter a spawn helper, i.e., a fucntion containing code that was cilk_spawn'd.
 // This function initializes worker and stack_frame structures.  Because this
 // routine will always be executed by a Cilk worker, it is optimized compared to
@@ -269,4 +303,25 @@ void __cilkrts_pop_frame(__cilkrts_stack_frame *sf) {
     if (sf->flags & CILK_FRAME_LAST) {
         uncilkify(w->g, sf);
     }
+}
+
+__attribute__((always_inline))
+void __exit_cilk_region(global_state *g, __cilkrts_stack_frame *sf) {
+    __cilkrts_worker *w =
+        atomic_load_explicit(&sf->worker, memory_order_relaxed);
+    cilkrts_alert(CFRAME, w, "__cilkrts_pop_frame %p", (void *)sf);
+
+    CILK_ASSERT(w, CHECK_CILK_FRAME_MAGIC(w->g, sf));
+    CILK_ASSERT(w, sf->worker == __cilkrts_get_tls_worker());
+    /* The inlined version in the Tapir compiler uses release
+       semantics for the store to call_parent, but relaxed
+       order may be acceptable for both.  A thief can't see
+       these operations until the Dekker protocol with a
+       memory barrier has run. */
+    w->current_stack_frame = sf->call_parent;
+    sf->call_parent = NULL;
+    // Check if sf is the final stack frame, and if so, terminate the Cilkified
+    // region.
+    CILK_ASSERT(w, sf->flags & CILK_FRAME_LAST);
+    uncilkify(w->g, sf);
 }

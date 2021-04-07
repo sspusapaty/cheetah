@@ -27,10 +27,10 @@
 // Method C
 
 #define START_CILK(handle, core) \
-    __cilkrts_stack_frame sf;
-//__cilkrts_enter_frame(&sf, handle);
+    __cilkrts_stack_frame sf; \
+    __enter_cilk_region(handle, &sf, core);
 
-//#define END_CILK(handle) __cilkrts_pop_frame(&sf, handle);
+#define END_CILK(handle) __exit_cilk_region(handle, &sf);
 
 #define CILK_REGION(handle,core,code) { \
                             START_CILK(handle, core) \
