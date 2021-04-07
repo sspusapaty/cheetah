@@ -1,6 +1,7 @@
 #ifndef TIMING_COUNT
 #define TIMING_COUNT 0
 #endif
+#define ZERO 0
 
 #include <stdio.h>
 #include <stdlib.h>

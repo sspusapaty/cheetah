@@ -5,6 +5,7 @@
 #include "../runtime/cilk2c_inlined.c"
 #include "ktiming.h"
 
+#define ZERO 0
 
 #ifndef TIMING_COUNT 
 #define TIMING_COUNT 1 

@@ -67,7 +67,9 @@ void __attribute__((weak)) dummy(void *p) { return; }
 
 #ifndef TIMING_COUNT
 #define TIMING_COUNT 0
-#endif 
+#endif
+
+#define ZERO 0
 
 #ifndef RAND_MAX
 #define RAND_MAX 32767

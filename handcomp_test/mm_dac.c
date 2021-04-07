@@ -14,6 +14,7 @@
 #define THRESHOLD 16
 #define TRUE 1
 #define FALSE 0
+#define ZERO 0
 
 void __attribute__((weak)) dummy(void *p) { return; }
 
