@@ -86,7 +86,7 @@ void set_force_reduce(global_state *g, unsigned int force_reduce) {
 }
 
 // Set global RTS options from environment variables.
-static void parse_rts_environment(global_state *g) {
+static void parse_rts_environment(global_state *g, unsigned int nworkers) {
     size_t stacksize = env_get_int("CILK_STACKSIZE");
     if (stacksize > 0)
         set_stacksize(g, stacksize);
@@ -97,7 +97,7 @@ static void parse_rts_environment(global_state *g) {
     if (fiber_pool_cap > 0)
         set_fiber_pool_cap(g, fiber_pool_cap);
 
-    long proc_override = env_get_int("CILK_NWORKERS");
+    long proc_override = nworkers;
     if (g->options.nproc == 0) {
         // use the number of cores online right now
         int available_cores = 0;
@@ -157,7 +157,7 @@ global_state *global_state_init(int argc, char *argv[]) {
     global_state *g = global_state_allocate();
 
     g->options = (struct rts_options)DEFAULT_OPTIONS;
-    parse_rts_environment(g);
+    parse_rts_environment(g, argc);
 
     unsigned active_size = g->options.nproc;
     printf("g->options.nproc = %d\n", g->options.nproc);
