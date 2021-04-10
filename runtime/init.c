@@ -194,6 +194,7 @@ static void threads_init(global_state *g, int boss_cpu) {
     }
 #endif
     int n_threads = g->nworkers;
+    printf("WORKERS FOR THIS HANDLE = %d\n", n_threads);
     CILK_ASSERT_G(n_threads > 0);
 
     /* TODO: Apple supports thread affinity using a different interface. */
@@ -337,8 +338,6 @@ static void __cilkrts_stop_workers(global_state *g) {
 // Setup runtime structures to start a new Cilkified region.  Executed by the
 // Cilkifying thread in cilkify().
 void invoke_cilkified_root(global_state *g, __cilkrts_stack_frame *sf, int boss_cpu) {
-    CILK_ASSERT_G(!__cilkrts_get_tls_worker());
-
     // Start the workers if necessary
     if (!g->workers_started)
         __cilkrts_start_workers(g, boss_cpu);

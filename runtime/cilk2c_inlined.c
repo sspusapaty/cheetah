@@ -71,7 +71,7 @@ cilkify(global_state *g, __cilkrts_stack_frame *sf) {
     }
 }
 
-inline __attribute__((always_inline)) void
+static inline __attribute__((always_inline)) void
 cilkify_with_core(global_state *g, __cilkrts_stack_frame *sf, int boss_cpu) {
     // After inlining, orig_rsp will receive the stack pointer in the stack
     // frame of the Cilk function instantiation on the Cilkifying thread.
@@ -149,6 +149,7 @@ __cilkrts_enter_frame(__cilkrts_stack_frame *sf) {
     __cilkrts_worker *w = __cilkrts_get_tls_worker();
     sf->flags = 0;
     if (NULL == w) {
+        CILK_ASSERT(w, false);
         cilkify(default_cilkrts, sf);
         w = __cilkrts_get_tls_worker();
     }
@@ -185,7 +186,7 @@ __enter_cilk_region(global_state *g, __cilkrts_stack_frame *sf, int boss_cpu) {
     __cilkrts_worker *w = __cilkrts_get_tls_worker();
     sf->flags = 0;
     // CILK_ASSERT(w, NULL == w) TODO: make a valid assert
-    cilkify_with_core(default_cilkrts, sf, boss_cpu);
+    cilkify_with_core(g, sf, boss_cpu);
     w = __cilkrts_get_tls_worker();
     cilkrts_alert(CFRAME, w, "__cilkrts_enter_frame %p", (void *)sf);
 
@@ -301,7 +302,7 @@ void __cilkrts_pop_frame(__cilkrts_stack_frame *sf) {
     // Check if sf is the final stack frame, and if so, terminate the Cilkified
     // region.
     if (sf->flags & CILK_FRAME_LAST) {
-        uncilkify(w->g, sf);
+        CILK_ASSERT(w, false);
     }
 }
 

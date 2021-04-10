@@ -160,6 +160,8 @@ global_state *global_state_init(int argc, char *argv[]) {
     parse_rts_environment(g);
 
     unsigned active_size = g->options.nproc;
+    printf("g->options.nproc = %d\n", g->options.nproc);
+    //if (active_size <= 0) active_size = g->options.nproc;
     CILK_ASSERT_G(active_size > 0);
     g->nworkers = active_size;
     cilkg_nproc = active_size;

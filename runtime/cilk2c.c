@@ -27,6 +27,7 @@ unsigned __cilkrts_get_worker_number(void) {
     if (w)
         return w->self;
     // Use the last exiting worker from default_cilkrts instead
+    CILK_ASSERT(w,false);
     return default_cilkrts->exiting_worker;
 }
 
