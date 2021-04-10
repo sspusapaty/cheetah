@@ -82,6 +82,8 @@ static void workers_init(global_state *g) {
         atomic_store_explicit(&w->exc, init, memory_order_relaxed);
         w->current_stack_frame = NULL;
         w->reducer_map = NULL;
+        w->dlock_a = 0;
+        w->dlockself_a = 0;
         // initialize internal malloc first
         cilk_internal_malloc_per_worker_init(w);
         cilk_fiber_pool_per_worker_init(w);
@@ -163,6 +165,7 @@ static void threads_init(global_state *g, int boss_cpu) {
     // Get the mask from the parent thread (master thread)
     if (0 == pthread_getaffinity_np(pthread_self(), sizeof(process_mask),
                                     &process_mask)) {
+        for (int i = 0; i < 8; i++) CPU_SET(i, &process_mask);
         available_cores = CPU_COUNT(&process_mask);
     }
 
@@ -194,7 +197,6 @@ static void threads_init(global_state *g, int boss_cpu) {
     }
 #endif
     int n_threads = g->nworkers;
-    printf("WORKERS FOR THIS HANDLE = %d\n", n_threads);
     CILK_ASSERT_G(n_threads > 0);
 
     /* TODO: Apple supports thread affinity using a different interface. */
@@ -224,7 +226,7 @@ static void threads_init(global_state *g, int boss_cpu) {
         }
     }
 #endif
-
+    
     for (int w = 0; w < n_threads; w++) {
         int status = pthread_create(&g->threads[w], NULL, scheduler_thread_proc,
                                     g->workers[w]);
@@ -242,6 +244,7 @@ static void threads_init(global_state *g, int boss_cpu) {
 
             cilkrts_alert(BOOT, NULL, "Bind worker %u to core %d of %d", w, cpu,
                           available_cores);
+            
 
             CPU_CLR(cpu, &process_mask);
             cpu_set_t worker_mask;
@@ -254,7 +257,11 @@ static void threads_init(global_state *g, int boss_cpu) {
                               cpu + off * step_in, available_cores);
             }
             cpu += step_out;
+           
 
+            printf("handle = %p, worker = %d, set = ", g, w);
+            for (int i = 0; i < available_cores; i++) printf("%d", CPU_ISSET(i, &worker_mask));
+            printf("\n");
             int err = pthread_setaffinity_np(g->threads[w], sizeof(worker_mask),
                                              &worker_mask);
             CILK_ASSERT_G(err == 0);

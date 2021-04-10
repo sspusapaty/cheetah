@@ -222,6 +222,12 @@ struct __cilkrts_worker {
 
     // Map from reducer names to reducer values
     cilkred_map *reducer_map;
+
+    // Deque lock attempts
+    unsigned long dlock_a;
+
+    // Deque lock_self attempts
+    unsigned long dlockself_a;
 };
 
 struct cilkrts_callbacks {

@@ -101,12 +101,10 @@ static void __attribute__ ((noinline)) helper(int x) {
     __cilkrts_enter_frame_fast(&sf);
     __cilkrts_detach(&sf);
     {
-        __cilkrts_stack_frame sf;
-        sf.flags = 0;
-        cilkify(handles[1], &sf);
+        START_CILK(handles[0], 4);
         int f = fib(x, &sf, &sf);
         printf("answer3 = %d\n", f);
-        uncilkify(handles[1], &sf);
+        END_CILK(handles[0])
     }
     __cilkrts_pop_frame(&sf);
     __cilkrts_leave_frame(&sf); 
@@ -115,8 +113,8 @@ static void __attribute__ ((noinline)) helper(int x) {
 int spawn_funcs(int n) {
     {
         dummy(alloca(ZERO));
-        __cilkrts_stack_frame sf;
-        //__cilkrts_enter_frame2(&sf, handles[1]);
+        
+        START_CILK(handles[1], 0);
 
         /* x = spawn fib(n-1) */
         __cilkrts_save_fp_ctrl_state(&sf);
@@ -124,7 +122,7 @@ int spawn_funcs(int n) {
           helper(n);
         }
         
-        fib(n, NULL, NULL);
+        printf("thread1 = %d", fib(n, NULL, NULL));
 
         /* cilk_sync */
         if(sf.flags & CILK_FRAME_UNSYNCHED) {
@@ -134,11 +132,15 @@ int spawn_funcs(int n) {
           }
         }
 
-        //__cilkrts_pop_frame2(&sf, handles[1]);
+        END_CILK(handles[1])
     }
     return 0;
 }
 
+void print_lock_attempts(__cilkrts_worker *w, void *d) {
+    printf("handle = %p, worker id = %d, dlock_a = %lu\n", w->g, w->self, w->dlock_a);
+    printf("handle = %p, worker id = %d, dlockself_a = %lu\n", w->g, w->self, w->dlockself_a);
+}
 
 #define NUM_TESTS 4
 int main(int argc, char** argv) {
@@ -184,6 +186,10 @@ int main(int argc, char** argv) {
             END_CILK(handles[0])
         }  
     } else {
+        gettimeofday(&t1,0);
+        spawn_funcs(42);
+        gettimeofday(&t2,0);
+        /*
         {
             START_CILK(handles[0], 0);
             gettimeofday(&t1,0);
@@ -191,9 +197,11 @@ int main(int argc, char** argv) {
             gettimeofday(&t2,0);
             END_CILK(handles[0])
         }
+        */
     }
 
-    
+    //for (int i = 0; i < num_runtimes; i++) for_each_worker(handles[i], print_lock_attempts, NULL);
+
     printf("answer4 = %d\n",f);
 
     unsigned long long runtime_ms = (todval(&t2)-todval(&t1))/1000;

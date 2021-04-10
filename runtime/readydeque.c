@@ -3,6 +3,7 @@
 #include "debug.h"
 #include "global.h"
 #include "local.h"
+#include <stdio.h>
 
 /*********************************************************
  * Management of ReadyDeques
@@ -17,7 +18,9 @@ void deque_lock_self(__cilkrts_worker *const w) {
     worker_id id = w->self;
     global_state *g = w->g;
     l->lock_wait = true;
-    cilk_mutex_lock(&g->deques[id].mutex);
+    int count = 0;
+    while (!cilk_mutex_try(&g->deques[id].mutex)) count++;
+    w->dlockself_a += count;
     l->lock_wait = false;
     g->deques[id].mutex_owner = id;
 }
@@ -42,7 +45,9 @@ void deque_lock(__cilkrts_worker *const w, worker_id pn) {
     global_state *g = w->g;
     struct local_state *l = w->l;
     l->lock_wait = true;
-    cilk_mutex_lock(&g->deques[pn].mutex);
+    int count = 0;
+    while (!cilk_mutex_try(&g->deques[pn].mutex)) count++;
+    w->dlock_a += count;
     l->lock_wait = false;
     g->deques[pn].mutex_owner = w->self;
 }
