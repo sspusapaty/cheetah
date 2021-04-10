@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <string.h>
 #include "cilk_helper.h"
 #define MAX_CORES 8
 
@@ -139,11 +140,19 @@ int spawn_funcs(int n) {
     return 0;
 }
 
+cpu_set_t set_cores(int n, unsigned long cores) {
+    cpu_set_t cpus;
+    CPU_ZERO(&cpus);
+    for (int i = n-1; i >= 0; i--) {
+        if (cores & 1) CPU_SET(i, &cpus);
+        cores >>= 1;
+    }
+    return cpus;
+}
 
 #define NUM_TESTS 4
 int main(int argc, char** argv) {
     int num_runtimes = 1;
-    int cores[] = {0, 4, 2, 6, 1, 3, 7};
     int x = 3;
     char* nested = "single";
     int nworkers[8] = {8, 8, 8, 8, 8, 8, 8, 8};
@@ -173,9 +182,9 @@ int main(int argc, char** argv) {
     
     if (!strcmp(nested, "nest")) {
         {
-            START_CILK(handles[0], 4);
+            START_CILK(handles[0], set_cores(8, 0b11110000));
             {
-                START_CILK(handles[1], 0);
+                START_CILK(handles[1], set_cores(8, 0b00001111));
                 gettimeofday(&t1,0);
                 f = fib(x, NULL, NULL);
                 gettimeofday(&t2,0);
@@ -185,7 +194,7 @@ int main(int argc, char** argv) {
         }  
     } else {
         {
-            START_CILK(handles[0], 0);
+            START_CILK(handles[0], set_cores(8, 0b11111111));
             gettimeofday(&t1,0);
             f = fib(x, NULL, NULL);
             gettimeofday(&t2,0);

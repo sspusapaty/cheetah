@@ -5,9 +5,12 @@
 // allow one to write and run "hand-compiled" Cilk code.
 // ================================================================
 
+#define _GNU_SOURCE
+#include <sched.h>
 #include <stdatomic.h>
 #include <stdio.h>
 #include <unwind.h>
+#include <pthread.h>
 
 #include "cilk-internal.h"
 #include "cilk2c.h"
@@ -56,7 +59,9 @@ cilkify(global_state *g, __cilkrts_stack_frame *sf) {
     // pointer, of the Cilk function.
     if (__builtin_setjmp(sf->ctx) == 0) {
         sysdep_save_fp_ctrl_state(sf);
-        invoke_cilkified_root(g, sf, 0);
+        cpu_set_t cpus;
+        pthread_getaffinity_np(pthread_self(), sizeof(cpus), &cpus);
+        invoke_cilkified_root(g, sf, cpus);
 
         wait_until_cilk_done(g);
 
@@ -72,7 +77,7 @@ cilkify(global_state *g, __cilkrts_stack_frame *sf) {
 }
 
 static inline __attribute__((always_inline)) void
-cilkify_with_core(global_state *g, __cilkrts_stack_frame *sf, int boss_cpu) {
+cilkify_with_core(global_state *g, __cilkrts_stack_frame *sf, cpu_set_t cpus) {
     // After inlining, orig_rsp will receive the stack pointer in the stack
     // frame of the Cilk function instantiation on the Cilkifying thread.
     void *orig_rsp = NULL;
@@ -86,7 +91,7 @@ cilkify_with_core(global_state *g, __cilkrts_stack_frame *sf, int boss_cpu) {
     // pointer, of the Cilk function.
     if (__builtin_setjmp(sf->ctx) == 0) {
         sysdep_save_fp_ctrl_state(sf);
-        invoke_cilkified_root(g, sf, boss_cpu);
+        invoke_cilkified_root(g, sf, cpus);
 
         wait_until_cilk_done(g);
 
@@ -182,11 +187,11 @@ __cilkrts_enter_frame(__cilkrts_stack_frame *sf) {
 }
 
 __attribute__((always_inline)) void
-__enter_cilk_region(global_state *g, __cilkrts_stack_frame *sf, int boss_cpu) {
+__enter_cilk_region(global_state *g, __cilkrts_stack_frame *sf, cpu_set_t cpus) {
     __cilkrts_worker *w = __cilkrts_get_tls_worker();
     sf->flags = 0;
     // CILK_ASSERT(w, NULL == w) TODO: make a valid assert
-    cilkify_with_core(g, sf, boss_cpu);
+    cilkify_with_core(g, sf, cpus);
     w = __cilkrts_get_tls_worker();
     cilkrts_alert(CFRAME, w, "__cilkrts_enter_frame %p", (void *)sf);
 
