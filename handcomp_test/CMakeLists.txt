@@ -38,6 +38,9 @@ target_link_libraries(nqueens ${LIBRARIES})
 add_executable(cilksort cilksort.c ${UTIL})
 target_link_libraries(cilksort ${LIBRARIES})
 
+add_executable(practice practice.c ${UTIL})
+target_link_libraries(practice ${LIBRARIES})
+
 #add_executable(prod_cons prod_cons.c ${UTIL})
 #target_link_libraries(prod_cons ${LIBRARIES})
 #
