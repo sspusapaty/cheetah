@@ -19,6 +19,7 @@
  *
  */
 
+#define _GNU_SOURCE
 #include <sys/time.h>
 #include <pthread.h>
 #include "../runtime/cilk2c.h"
@@ -51,5 +52,15 @@
 
 unsigned long long todval (struct timeval *tp) {
     return tp->tv_sec * 1000 * 1000 + tp->tv_usec;
+}
+
+cpu_set_t set_cores(int n, unsigned long cores) {
+    cpu_set_t cpus;
+    CPU_ZERO(&cpus);
+    for (int i = n-1; i >= 0; i--) {
+        if (cores & 1) CPU_SET(i, &cpus);
+        cores >>= 1;
+    }
+    return cpus;
 }
 

@@ -102,12 +102,10 @@ static void __attribute__ ((noinline)) helper(int x) {
     __cilkrts_enter_frame_fast(&sf);
     __cilkrts_detach(&sf);
     {
-        __cilkrts_stack_frame sf;
-        sf.flags = 0;
-        cilkify(handles[1], &sf);
+        START_CILK(handles[1], set_cores(8, 0b00001111));
         int f = fib(x, &sf, &sf);
-        printf("answer3 = %d\n", f);
-        uncilkify(handles[1], &sf);
+        printf("inner thread = %d\n", f);
+        END_CILK(handles[1]);
     }
     __cilkrts_pop_frame(&sf);
     __cilkrts_leave_frame(&sf); 
@@ -116,8 +114,8 @@ static void __attribute__ ((noinline)) helper(int x) {
 int spawn_funcs(int n) {
     {
         dummy(alloca(ZERO));
-        __cilkrts_stack_frame sf;
-        //__cilkrts_enter_frame2(&sf, handles[1]);
+
+        START_CILK(handles[0], set_cores(8, 0b11110000));
 
         /* x = spawn fib(n-1) */
         __cilkrts_save_fp_ctrl_state(&sf);
@@ -125,7 +123,7 @@ int spawn_funcs(int n) {
           helper(n);
         }
         
-        fib(n, NULL, NULL);
+        printf("outer thread = %d\n", fib(n, NULL, NULL));
 
         /* cilk_sync */
         if(sf.flags & CILK_FRAME_UNSYNCHED) {
@@ -134,20 +132,10 @@ int spawn_funcs(int n) {
             __cilkrts_sync(&sf);
           }
         }
-
-        //__cilkrts_pop_frame2(&sf, handles[1]);
+        
+        END_CILK(handles[0]);
     }
     return 0;
-}
-
-cpu_set_t set_cores(int n, unsigned long cores) {
-    cpu_set_t cpus;
-    CPU_ZERO(&cpus);
-    for (int i = n-1; i >= 0; i--) {
-        if (cores & 1) CPU_SET(i, &cpus);
-        cores >>= 1;
-    }
-    return cpus;
 }
 
 #define NUM_TESTS 4
@@ -188,22 +176,25 @@ int main(int argc, char** argv) {
                 gettimeofday(&t1,0);
                 f = fib(x, NULL, NULL);
                 gettimeofday(&t2,0);
-                END_CILK(handles[1])
+                END_CILK(handles[1]);
             }
-            END_CILK(handles[0])
+            END_CILK(handles[0]);
         }  
     } else {
+        gettimeofday(&t1,0);
+        spawn_funcs(42);
+        gettimeofday(&t2,0);
+        /*
         {
             START_CILK(handles[0], set_cores(8, 0b11111111));
             gettimeofday(&t1,0);
             f = fib(x, NULL, NULL);
             gettimeofday(&t2,0);
-            END_CILK(handles[0])
+            END_CILK(handles[0]);
         }
+        */
     }
 
-    
-    printf("answer4 = %d\n",f);
 
     unsigned long long runtime_ms = (todval(&t2)-todval(&t1))/1000;
     printf("time = %f\n", runtime_ms/1000.0);
