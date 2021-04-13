@@ -96,17 +96,21 @@ struct args {
 
 global_state* handles[MAX_CORES]; 
 
-
-static void __attribute__ ((noinline)) helper(int x) {
-    __cilkrts_stack_frame sf;
-    __cilkrts_enter_frame_fast(&sf);
-    __cilkrts_detach(&sf);
+void raw(void* n) {
+    int x = (int)n;
     {
         START_CILK(handles[1], set_cores(8, 0b00001111));
         int f = fib(x, &sf, &sf);
         printf("inner thread = %d\n", f);
         END_CILK(handles[1]);
-    }
+    }    
+}
+
+static void __attribute__ ((noinline)) helper(pthread_t *thread, int x) {
+    __cilkrts_stack_frame sf;
+    __cilkrts_enter_frame_fast(&sf);
+    __cilkrts_detach(&sf);
+    pthread_create(thread, NULL, raw, (void*)x);
     __cilkrts_pop_frame(&sf);
     __cilkrts_leave_frame(&sf); 
 }
@@ -118,12 +122,13 @@ int spawn_funcs(int n) {
         START_CILK(handles[0], set_cores(8, 0b11110000));
 
         /* x = spawn fib(n-1) */
+        pthread_t pt;
         __cilkrts_save_fp_ctrl_state(&sf);
         if(!__builtin_setjmp(sf.ctx)) {
-          helper(n);
+          helper(&pt, n);
         }
         
-        printf("outer thread = %d\n", fib(n, NULL, NULL));
+        printf("outer thread = %d\n", fib(42, NULL, NULL));
 
         /* cilk_sync */
         if(sf.flags & CILK_FRAME_UNSYNCHED) {
@@ -132,6 +137,8 @@ int spawn_funcs(int n) {
             __cilkrts_sync(&sf);
           }
         }
+
+        pthread_join(pt, NULL);
         
         END_CILK(handles[0]);
     }
