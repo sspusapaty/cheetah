@@ -56,7 +56,7 @@ cilkify(global_state *g, __cilkrts_stack_frame *sf) {
     // pointer, of the Cilk function.
     if (__builtin_setjmp(sf->ctx) == 0) {
         sysdep_save_fp_ctrl_state(sf);
-        invoke_cilkified_root(g, sf, 0);
+        invoke_cilkified_root(g, sf);
 
         wait_until_cilk_done(g);
 
@@ -71,35 +71,6 @@ cilkify(global_state *g, __cilkrts_stack_frame *sf) {
     }
 }
 
-static inline __attribute__((always_inline)) void
-cilkify_with_core(global_state *g, __cilkrts_stack_frame *sf, int boss_cpu) {
-    // After inlining, orig_rsp will receive the stack pointer in the stack
-    // frame of the Cilk function instantiation on the Cilkifying thread.
-    void *orig_rsp = NULL;
-    ASM_GET_SP(orig_rsp);
-
-#ifdef ENABLE_CILKRTS_PEDIGREE
-    __cilkrts_init_dprng();
-#endif
-
-    // After inlining, the setjmp saves the processor state, including the frame
-    // pointer, of the Cilk function.
-    if (__builtin_setjmp(sf->ctx) == 0) {
-        sysdep_save_fp_ctrl_state(sf);
-        invoke_cilkified_root(g, sf, boss_cpu);
-
-        wait_until_cilk_done(g);
-
-        // At this point, some Cilk worker must have completed the Cilkified
-        // region and executed uncilkify at the end of the Cilk function.  The
-        // longjmp will therefore jump to the end of the Cilk function.  We need
-        // only restore the stack pointer to its original value on the
-        // Cilkifying thread's stack.
-        SP(sf) = orig_rsp;
-        sysdep_restore_fp_state(sf);
-        __builtin_longjmp(sf->ctx, 1);
-    }
-}
 // End a Cilkified region.  This routine runs on one worker in global_state g
 // who finished executing the Cilkified region, in order to transfer control
 // back to the original thread that began the Cilkified region.  This routine
@@ -182,11 +153,11 @@ __cilkrts_enter_frame(__cilkrts_stack_frame *sf) {
 }
 
 __attribute__((always_inline)) void
-__enter_cilk_region(global_state *g, __cilkrts_stack_frame *sf, int boss_cpu) {
+__enter_cilk_region(global_state *g, __cilkrts_stack_frame *sf) {
     __cilkrts_worker *w = __cilkrts_get_tls_worker();
     sf->flags = 0;
     // CILK_ASSERT(w, NULL == w) TODO: make a valid assert
-    cilkify_with_core(g, sf, boss_cpu);
+    cilkify(g, sf);
     w = __cilkrts_get_tls_worker();
     cilkrts_alert(CFRAME, w, "__cilkrts_enter_frame %p", (void *)sf);
 

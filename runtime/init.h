@@ -3,7 +3,7 @@
 
 #include "cilk-internal.h"
 
-void invoke_cilkified_root(global_state *g, __cilkrts_stack_frame *sf, int boss_cpu);
+void invoke_cilkified_root(global_state *g, __cilkrts_stack_frame *sf);
 void wait_until_cilk_done(global_state *g);
 __attribute__((noreturn))
 void exit_cilkified_root(global_state *g, __cilkrts_stack_frame *sf);

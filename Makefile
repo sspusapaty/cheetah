@@ -2,7 +2,7 @@ all:
 	$(MAKE) -C runtime
 	$(MAKE) -C handcomp_test
 	if [ -d bench ]; then $(MAKE) -C bench; fi
-	if [ -d reducer_bench ]; then $(MAKE) -C reducer_bench; fi
+	#if [ -d reducer_bench ]; then $(MAKE) -C reducer_bench; fi
 
 clean:
 	$(MAKE) -C runtime clean

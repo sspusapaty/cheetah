@@ -38,8 +38,8 @@ target_link_libraries(nqueens ${LIBRARIES})
 add_executable(cilksort cilksort.c ${UTIL})
 target_link_libraries(cilksort ${LIBRARIES})
 
-add_executable(nested_cilk nested_cilk.c ${UTIL})
-target_link_libraries(nested_cilk ${LIBRARIES})
+add_executable(cilk_pthread_test cilk_pthread_test.c ${UTIL})
+target_link_libraries(cilk_pthread_test ${LIBRARIES})
 
 #add_executable(prod_cons prod_cons.c ${UTIL})
 #target_link_libraries(prod_cons ${LIBRARIES})
