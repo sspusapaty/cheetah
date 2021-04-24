@@ -86,8 +86,9 @@ struct args {
 
 void* dispatch(void *n) {
     struct args* x = (struct args*)n;
-    printf("hello x is %d\n", x->val);
+    printf("hello worker? %d\n", cilk_is_worker());
     printf("%d\n", fib(x->val));
+    printf("hello worker? %d\n", cilk_is_worker());
     return NULL;
 }
 
@@ -97,20 +98,14 @@ int main(int argc, char** argv) {
 
     gettimeofday(&t1,0);
 
-    pthread_t p1;
+    pthread_t p1, p2;
 
     struct args a = {42};
-    cilk_pthread_create(&p1, NULL, dispatch, (void*)&a, 1);
+    cilk_pthread_create(&p1, NULL, dispatch, (void*)&a, 5);
+    //cilk_pthread_create(&p2, NULL, dispatch, (void*)&a, 4);
     pthread_join(p1, NULL);
-    /*
-    global_state* handle = __cilkrts_startup(4, NULL);
-
-    __cilkrts_stack_frame sf;
-    __enter_cilk_region(handle, &sf);
-    printf("%d\n", fib(42));
-    __exit_cilk_region(handle, &sf);
-    */
-
+    //pthread_join(p2, NULL);
+    
     gettimeofday(&t2,0);
     
     unsigned long long runtime_ms = (todval(&t2)-todval(&t1))/1000;

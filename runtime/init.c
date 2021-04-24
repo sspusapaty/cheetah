@@ -89,6 +89,9 @@ static void workers_init(global_state *g) {
 }
 
 static void *scheduler_thread_proc(void *arg) {
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    int s = pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    if (s != 0) printf("error setting cancel state\n");
     __cilkrts_worker *w = (__cilkrts_worker *)arg;
     cilkrts_alert(BOOT, w, "scheduler_thread_proc");
     __cilkrts_set_tls_worker(w);
@@ -124,6 +127,7 @@ static void *scheduler_thread_proc(void *arg) {
         } else {
             worker_scheduler(w, NULL);
         }
+        
 
         // At this point, some worker will have finished the Cilkified region,
         // meaning it recordied its ID in g->exiting_worker and set g->done = 1.
