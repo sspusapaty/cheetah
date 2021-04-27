@@ -257,6 +257,7 @@ void __cilkrts_save_fp_ctrl_state(__cilkrts_stack_frame *sf) {
 // for correctness.
 __attribute__((always_inline))
 void __cilkrts_pop_frame(__cilkrts_stack_frame *sf) {
+    pthread_testcancel();
     __cilkrts_worker *w =
         atomic_load_explicit(&sf->worker, memory_order_relaxed);
     cilkrts_alert(CFRAME, w, "__cilkrts_pop_frame %p", (void *)sf);

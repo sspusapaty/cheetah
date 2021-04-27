@@ -39,6 +39,7 @@ static global_state *global_state_allocate() {
     pthread_mutex_init(&g->cilkified_lock, NULL);
     pthread_cond_init(&g->cilkified_cond_var, NULL);
     pthread_mutex_init(&g->start_lock, NULL);
+    pthread_mutex_init(&g->exit_lock, NULL);
     pthread_cond_init(&g->start_cond_var, NULL);
 
     return g;

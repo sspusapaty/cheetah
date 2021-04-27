@@ -38,7 +38,7 @@ static void __attribute__ ((noinline)) fib_spawn_helper(int *x, int n);
 
 int fib(int n) {
     int x, y, _tmp;
-
+    
     if(n < 2)
         return n;
 
@@ -62,11 +62,12 @@ int fib(int n) {
       }
     }
     _tmp = x + y;
-
+    
     __cilkrts_pop_frame(&sf);
     if (0 != sf.flags)
         __cilkrts_leave_frame(&sf);
-
+    
+    
     return _tmp;
 }
 
@@ -87,9 +88,11 @@ struct args {
 void* dispatch(void *n) {
     struct args* x = (struct args*)n;
     printf("hello worker? %d\n", cilk_is_worker());
-    printf("%d\n", fib(x->val));
+    int r = fib(x->val);
     printf("hello worker? %d\n", cilk_is_worker());
-    return NULL;
+    //cilk_pthread_exit((void*)r);
+
+    return (void*)r;
 }
 
 #define NUM_TESTS 4
@@ -102,9 +105,12 @@ int main(int argc, char** argv) {
 
     struct args a = {42};
     cilk_pthread_create(&p1, NULL, dispatch, (void*)&a, 5);
-    //cilk_pthread_create(&p2, NULL, dispatch, (void*)&a, 4);
-    pthread_join(p1, NULL);
-    //pthread_join(p2, NULL);
+    cilk_pthread_create(&p2, NULL, dispatch, (void*)&a, 4);
+    void* p;
+    pthread_join(p1, &p);
+    printf("answer = %d\n", (int)p);
+    pthread_join(p2, &p);
+    printf("answer = %d\n", (int)p);
     
     gettimeofday(&t2,0);
     

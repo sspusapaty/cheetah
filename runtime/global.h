@@ -71,6 +71,7 @@ struct global_state {
     pthread_cond_t cilkified_cond_var;
     pthread_mutex_t start_lock;
     pthread_cond_t start_cond_var;
+    pthread_mutex_t exit_lock;
 
     struct reducer_id_manager *id_manager; /* null while Cilk is running */
 
