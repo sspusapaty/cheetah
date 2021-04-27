@@ -67,6 +67,7 @@ int fib(int n) {
     if (0 != sf.flags)
         __cilkrts_leave_frame(&sf);
     
+    cilk_pthread_exit((void*)n);
     
     return _tmp;
 }
@@ -90,7 +91,6 @@ void* dispatch(void *n) {
     printf("hello worker? %d\n", cilk_is_worker());
     int r = fib(x->val);
     printf("hello worker? %d\n", cilk_is_worker());
-    //cilk_pthread_exit((void*)r);
 
     return (void*)r;
 }
@@ -105,12 +105,12 @@ int main(int argc, char** argv) {
 
     struct args a = {42};
     cilk_pthread_create(&p1, NULL, dispatch, (void*)&a, 5);
-    cilk_pthread_create(&p2, NULL, dispatch, (void*)&a, 4);
+    //cilk_pthread_create(&p2, NULL, dispatch, (void*)&a, 4);
     void* p;
     pthread_join(p1, &p);
     printf("answer = %d\n", (int)p);
-    pthread_join(p2, &p);
-    printf("answer = %d\n", (int)p);
+    //pthread_join(p2, &p);
+    //printf("answer = %d\n", (int)p);
     
     gettimeofday(&t2,0);
     

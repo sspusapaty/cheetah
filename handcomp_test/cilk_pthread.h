@@ -53,9 +53,12 @@ void cilk_pthread_exit(void *value_ptr) { // handle return pointer properly
         pthread_exit(value_ptr);
     } else {
         __cilkrts_worker *w = __cilkrts_get_tls_worker();
-        pthread_mutex_lock(&(w->g->exit_lock));
+        while(!pthread_mutex_trylock(&(w->g->exit_lock))) {
+            pthread_testcancel();
+        }
         int s;
         // cancel all other threads
+        printf("thread %d is doing exit protocol\n", w->self);
         for (unsigned i = 0; i < w->g->options.nproc; ++i) {
             if (i != w->self){
                 printf("cancelling i=%d\n", i);

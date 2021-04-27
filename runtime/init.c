@@ -472,7 +472,7 @@ static void global_state_deinit(global_state *g) {
 static void deques_deinit(global_state *g) {
     cilkrts_alert(BOOT, NULL, "(deques_deinit) Clean up deques");
     for (unsigned int i = 0; i < g->options.nproc; i++) {
-        CILK_ASSERT_G(g->deques[i].mutex_owner == NO_WORKER);
+        CILK_ASSERT_G(g->deques[i].mutex_owner == NO_WORKER); //TODO possible bug here with cilk_pthread_exit
         cilk_mutex_destroy(&(g->deques[i].mutex));
     }
 }
