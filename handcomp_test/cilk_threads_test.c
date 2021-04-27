@@ -99,10 +99,12 @@ int main(int argc, char** argv) {
     thrd_t p1, p2;
 
     struct args a = {42};
-    cilk_thrd_create(&p1, dispatch, (void*)&a, 5);
-    int p;
-    thrd_join(p1, &p);
-    printf("answer = %d\n", p);
+    cilk_thrd_create(&p1, dispatch, (void*)&a, 4);
+    cilk_thrd_create(&p2, dispatch, (void*)&a, 4);
+    int a1,a2;
+    thrd_join(p1, &a1);
+    thrd_join(p2, &a2);
+    printf("answer = %d\n", a1);
     
     gettimeofday(&t2,0);
     
