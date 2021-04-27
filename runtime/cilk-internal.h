@@ -9,6 +9,7 @@ extern "C" {
 #include <stdint.h>
 
 #include <cilk/cilk_api.h>
+#include <threads.h>
 
 #include "debug.h"
 #include "fiber.h"
@@ -222,6 +223,9 @@ struct __cilkrts_worker {
 
     // Map from reducer names to reducer values
     cilkred_map *reducer_map;
+
+    // Hold info of boss thread
+    thrd_t boss;
 };
 
 struct cilkrts_callbacks {

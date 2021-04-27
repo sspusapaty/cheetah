@@ -417,7 +417,7 @@ void cilk_internal_malloc_global_destroy(global_state *g) {
     global_im_pool_destroy(&(g->im_pool)); // free global mem blocks
     cilk_mutex_destroy(&(g->im_lock));
     for (int i = 0; i < IM_NUM_TAGS; ++i) {
-        //CILK_ASSERT_G(g->im_desc.num_malloc[i] == 0);
+        CILK_ASSERT_G(g->im_desc.num_malloc[i] == 0);
     }
 }
 

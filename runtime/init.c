@@ -73,7 +73,7 @@ static void workers_init(global_state *g) {
         w->self = i;
         w->g = g;
         w->l = worker_local_init(g);
-
+        w->boss = thrd_current();       
         w->ltq_limit = w->l->shadow_stack + g->options.deqdepth;
         g->workers[i] = w;
         __cilkrts_stack_frame **init = w->l->shadow_stack + 1;
@@ -89,9 +89,6 @@ static void workers_init(global_state *g) {
 }
 
 static void *scheduler_thread_proc(void *arg) {
-    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-    int s = pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
-    if (s != 0) printf("error setting cancel state\n");
     __cilkrts_worker *w = (__cilkrts_worker *)arg;
     cilkrts_alert(BOOT, w, "scheduler_thread_proc");
     __cilkrts_set_tls_worker(w);
@@ -128,8 +125,6 @@ static void *scheduler_thread_proc(void *arg) {
             worker_scheduler(w, NULL);
         }
         
-        pthread_testcancel();
-
         // At this point, some worker will have finished the Cilkified region,
         // meaning it recordied its ID in g->exiting_worker and set g->done = 1.
         // That worker's state accurately reflects the execution of the
