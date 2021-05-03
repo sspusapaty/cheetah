@@ -6,6 +6,7 @@
 
 global_state *__cilkrts_startup(int argc, char *argv[]);
 void __cilkrts_shutdown(global_state *g);
+void signal_immediate_exception_to_all(__cilkrts_worker *const w);
 __thread int exit_res;
 
 /*
@@ -61,9 +62,6 @@ thrd_t cilk_thrd_current() {
     return w->boss;
 }
 
-int thrd_sleep(const struct timespec* duration, struct timespec* remaining) {return -1;} //TODO
-void thrd_yield() {} //TODO
-
 // Doesn't work entirely. Either only 1 active worker needs to be guaranteed, or user has put appropriate
 // cancellation points
 void cilk_thrd_exit(int res) {
@@ -96,4 +94,67 @@ void cilk_thrd_exit(int res) {
     // jump back to exit early from cilk region
     sysdep_restore_fp_state(sf);
     __builtin_longjmp(sf->ctx, 1);
+}
+
+void signal_immediate_exception_to_all(__cilkrts_worker *const w) {
+    int i, active_size = w->g->nworkers;
+    __cilkrts_worker *curr_w;
+
+    for(i=0; i<active_size; i++) {
+        curr_w = w->g->workers[i];
+        atomic_store_explicit(&curr_w->exc, EXCEPTION_INFINITY, memory_order_release);
+    }
+}
+
+void reset_exception_to_all(__cilkrts_worker *const w) {
+    int i, active_size = w->g->nworkers;
+    __cilkrts_worker *curr_w;
+
+    for(i=0; i<active_size; i++) {
+        curr_w = w->g->workers[i];
+        atomic_store_explicit(&curr_w->exc,
+                              atomic_load_explicit(&curr_w->head, memory_order_relaxed),
+                              memory_order_release);
+    }
+}
+
+void cilk_thrd_yield() {
+    __cilkrts_worker *w = __cilkrts_get_tls_worker();
+   
+    printf("about to signal all workers...\n");
+    // signal exception to all workers
+    
+    pthread_mutex_lock(&(w->g->exit_lock));
+    
+    atomic_store_explicit(&w->g->thrd_call.type, THRD_YIELD, memory_order_relaxed);
+    signal_immediate_exception_to_all(w);
+
+    thrd_yield();
+    
+    atomic_store_explicit(&w->g->thrd_call.type, THRD_NONE, memory_order_relaxed);
+    reset_exception_to_all(w);
+    
+    pthread_mutex_unlock(&(w->g->exit_lock));
+}
+
+int cilk_thrd_sleep(const struct timespec* time_point, struct timespec* remaining) {
+    __cilkrts_worker *w = __cilkrts_get_tls_worker();
+   
+    // signal exception to all workers
+    pthread_mutex_lock(&(w->g->exit_lock));
+    
+    atomic_store_explicit(&w->g->thrd_call.type, THRD_SLEEP, memory_order_relaxed);
+    w->g->thrd_call.time_point = time_point;
+    signal_immediate_exception_to_all(w);
+
+    printf("worker %d sleeping for %ld seconds!\n", w->self, time_point->tv_sec);
+    int res = thrd_sleep(time_point, remaining);
+   
+    w->g->thrd_call.time_point = NULL;
+    atomic_store_explicit(&w->g->thrd_call.type, THRD_NONE, memory_order_relaxed);
+    //reset_exception_to_all(w);
+    
+    pthread_mutex_unlock(&(w->g->exit_lock));
+
+    return res;
 }

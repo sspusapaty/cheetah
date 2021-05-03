@@ -40,6 +40,14 @@ struct rts_options {
     unsigned int force_reduce;   /* can be set via env variable CILK_FORCE_REDUCE */
 };
 
+#define THRD_YIELD 1
+#define THRD_SLEEP 2
+#define THRD_NONE 0
+struct thrd_lib_params {
+    volatile atomic_uint type;
+    struct timespec* time_point;
+};
+
 struct global_state {
     /* globally-visible options (read-only after init) */
     struct rts_options options;
@@ -71,7 +79,10 @@ struct global_state {
     pthread_cond_t cilkified_cond_var;
     pthread_mutex_t start_lock;
     pthread_cond_t start_cond_var;
+    
+    // added by for thrd support
     pthread_mutex_t exit_lock;
+    struct thrd_lib_params thrd_call;
 
     struct reducer_id_manager *id_manager; /* null while Cilk is running */
 

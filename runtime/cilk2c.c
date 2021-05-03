@@ -192,6 +192,7 @@ void __cilkrts_pause_frame(__cilkrts_stack_frame *sf, char *exn) {
        with the clear of DETACHED.  Does it modify flags too? */
     sf->flags &= ~CILK_FRAME_DETACHED;
     if (__builtin_expect(exc > tail, 0)) {
+        printf("made it here\n");
         Cilk_exception_handler(exn);
         // If Cilk_exception_handler returns this thread won
         // the race and can return to the parent function.

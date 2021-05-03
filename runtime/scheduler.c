@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <unistd.h> /* usleep */
 #include <unwind.h>
+#include <threads.h>
 
 #include "cilk-internal.h"
 #include "closure.h"
@@ -92,7 +93,7 @@ static void reset_exception_pointer(__cilkrts_worker *const w, Closure *cl) {
 }
 
 /* Unused for now but may be helpful later
-static void signal_immediate_exception_to_all(__cilkrts_worker *const w) {
+void signal_immediate_exception_to_all(__cilkrts_worker *const w) {
     int i, active_size = w->g->nworkers;
     __cilkrts_worker *curr_w;
 
@@ -101,7 +102,8 @@ static void signal_immediate_exception_to_all(__cilkrts_worker *const w) {
         curr_w->exc = EXCEPTION_INFINITY;
     }
     // make sure the exception is visible, before we continue
-    Cilk_fence();
+    // Cilk_fence();
+    __asm__ __volatile__ ("" : : : "memory");
 }
 */
 
@@ -612,6 +614,7 @@ void Cilk_exception_handler(char *exn) {
         atomic_load_explicit(&w->head, memory_order_relaxed);
     __cilkrts_stack_frame **tail =
         atomic_load_explicit(&w->tail, memory_order_relaxed);
+
     if (head > tail) {
         cilkrts_alert(EXCEPT, w, "(Cilk_exception_handler) this is a steal!");
         if (NULL != exn)
@@ -627,6 +630,19 @@ void Cilk_exception_handler(char *exn) {
         longjmp_to_runtime(w); // NOT returning back to user code
 
     } else { // not steal, not abort; false alarm
+        int thrd_call_type = atomic_load_explicit(&w->g->thrd_call.type, memory_order_relaxed);
+        printf("worker %d has thrd_call_type = %d!\n", w->self, thrd_call_type);
+        if (thrd_call_type == THRD_YIELD) {
+            thrd_yield();
+            printf("worker %d yielded!\n", w->self);
+        } else if (thrd_call_type == THRD_SLEEP) {
+            const struct timespec* time_point = w->g->thrd_call.time_point;
+            printf("worker %d tried to sleep!\n", w->self);
+            if (time_point) {
+                printf("worker %d sleeping for %ld seconds!\n", w->self, time_point->tv_sec);
+                thrd_sleep(time_point, NULL);
+            }
+        }
         Closure_unlock(w, t);
         deque_unlock_self(w);
 

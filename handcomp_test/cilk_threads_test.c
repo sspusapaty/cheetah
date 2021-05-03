@@ -61,6 +61,9 @@ int fib(int n) {
       }
     }
     _tmp = x + y;
+
+    //cilk_thrd_yield();
+    cilk_thrd_sleep(&(struct timespec){.tv_sec=10}, NULL);
     
     __cilkrts_pop_frame(&sf);
     if (0 != sf.flags)
@@ -74,6 +77,7 @@ static void __attribute__ ((noinline)) fib_spawn_helper(int *x, int n) {
     __cilkrts_stack_frame sf;
     __cilkrts_enter_frame_fast(&sf);
     __cilkrts_detach(&sf);
+
     *x = fib(n);
     __cilkrts_pop_frame(&sf);
     __cilkrts_leave_frame(&sf); 
@@ -86,7 +90,8 @@ struct args {
 int dispatch(void *n) {
     struct args* x = (struct args*)n;
     int r = fib(x->val);
-
+    //int s = cilk_thrd_sleep(&(struct timespec){.tv_sec=1}, NULL);
+    //printf("result of sleep = %d\n");
     return r;
 }
 
@@ -98,12 +103,12 @@ int main(int argc, char** argv) {
 
     thrd_t p1, p2;
 
-    struct args a = {42};
+    struct args a = {20};
     cilk_thrd_create(&p1, dispatch, (void*)&a, 4);
-    cilk_thrd_create(&p2, dispatch, (void*)&a, 4);
+    //cilk_thrd_create(&p2, dispatch, (void*)&a, 4);
     int a1,a2;
     thrd_join(p1, &a1);
-    thrd_join(p2, &a2);
+    //thrd_join(p2, &a2);
     printf("answer = %d\n", a1);
     
     gettimeofday(&t2,0);
