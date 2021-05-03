@@ -37,13 +37,9 @@ void handle_sigint(int sig) {
     //exit(0);
 }
 
-void handle_sigint2(int sig) {
-    printf("it works!!\n");
-}
-
 static int cilkify_wrapper(void *arg) {
-    signal(1, handle_sigint); // TODO: forward signals to children
-
+    //signal(1, handle_sigint); // TODO: forward signals to children
+    
     cilk_thrd_args* args = (cilk_thrd_args*) arg;
 
     // TODO: create runtime s.t. all runtime args can be passed in here, not just nworkers

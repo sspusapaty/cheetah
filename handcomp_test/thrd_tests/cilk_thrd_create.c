@@ -107,7 +107,7 @@ bool three_thrd_create_detach_success(int num_workers) {
 
 int main(int argc, char** argv) {
 
-    printf("Running thrd_create tests...\n");
+    printf("Running thrd_create, thrd_join, thrd_detach tests...\n");
     run_test("one_thrd_create_join_success", one_thrd_create_join_success, 2);
     run_test("one_thrd_create_join_success", one_thrd_create_join_success, 4);
     run_test("three_thrd_create_join_success", three_thrd_create_join_success, 4);
