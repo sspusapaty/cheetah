@@ -1,6 +1,8 @@
 # Exes
 handcomp_test/*
 !handcomp_test/*.*
+handcomp_test/thrd_tests/*
+!handcomp_test/thrd_tests/*.*
 
 # Emacs backups
 *~
@@ -9,6 +11,8 @@ handcomp_test/*
 # Compilations
 *.o
 *.a
+thrd_tests/*.o
+thrd_tests/*.a
 
 # lib 
 *.a
