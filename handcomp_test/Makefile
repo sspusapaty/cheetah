@@ -6,7 +6,8 @@ OBJS = $(patsubst %.c,%.o,$(SRCS))
 
 DEFINES = $(ABI_DEF)
 
-TESTS   = cilksort fib mm_dac nqueens cilk_threads_test
+THRD_TESTS = thrd_tests/cilk_thrd_create
+TESTS   = cilksort fib mm_dac nqueens cilk_threads_test $(THRD_TESTS)
 OPTIONS = $(OPT) $(ARCH) $(DBG) -Wall $(DEFINES) -fno-omit-frame-pointer
 # dynamic linking
 # RTS_DLIBS = -L../runtime -Wl,-rpath -Wl,../runtime -lopencilk
@@ -42,4 +43,4 @@ check:
 	CILK_NWORKERS=$(MANYPROC) ./nqueens 14
 
 clean:
-	rm -f *.o *~ $(TESTS) core.*
+	rm -f thrd_tests/*.o *.o *~ $(TESTS) core.*
