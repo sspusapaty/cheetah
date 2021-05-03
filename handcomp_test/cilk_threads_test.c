@@ -62,9 +62,6 @@ int fib(int n) {
     }
     _tmp = x + y;
 
-    //cilk_thrd_yield();
-    cilk_thrd_sleep(&(struct timespec){.tv_sec=10}, NULL);
-    
     __cilkrts_pop_frame(&sf);
     if (0 != sf.flags)
         __cilkrts_leave_frame(&sf);
@@ -87,25 +84,61 @@ struct args {
     int val;
 };
 
+static void __attribute__ ((noinline)) helper();
+
 int dispatch(void *n) {
     struct args* x = (struct args*)n;
+    
+    dummy(alloca(0));
+    __cilkrts_stack_frame sf;
+    __cilkrts_enter_frame(&sf);
+    
+    __cilkrts_save_fp_ctrl_state(&sf);
+    if(!__builtin_setjmp(sf.ctx)) {
+      helper();
+    }
+    
     int r = fib(x->val);
-    //int s = cilk_thrd_sleep(&(struct timespec){.tv_sec=1}, NULL);
-    //printf("result of sleep = %d\n");
+    
+    if(sf.flags & CILK_FRAME_UNSYNCHED) {
+      __cilkrts_save_fp_ctrl_state(&sf);
+      if(!__builtin_setjmp(sf.ctx)) {
+        __cilkrts_sync(&sf);
+      }
+    }
+    
+    __cilkrts_pop_frame(&sf);
+    if (0 != sf.flags)
+        __cilkrts_leave_frame(&sf);
+
     return r;
+}
+
+static void __attribute__ ((noinline)) helper() {
+
+    __cilkrts_stack_frame sf;
+    __cilkrts_enter_frame_fast(&sf);
+    __cilkrts_detach(&sf);
+    int s = cilk_thrd_sleep(&(struct timespec){.tv_sec=10}, NULL);
+    printf("%d is return\n", s);
+    __cilkrts_pop_frame(&sf);
+    __cilkrts_leave_frame(&sf); 
 }
 
 #define NUM_TESTS 4
 int main(int argc, char** argv) {
     struct timeval t1, t2;
+    //signal(2, handle_sigint2);
 
     gettimeofday(&t1,0);
 
     thrd_t p1, p2;
 
-    struct args a = {20};
+    struct args a = {42};
     cilk_thrd_create(&p1, dispatch, (void*)&a, 4);
     //cilk_thrd_create(&p2, dispatch, (void*)&a, 4);
+    sleep(2);
+    pthread_kill(p1, 1);
     int a1,a2;
     thrd_join(p1, &a1);
     //thrd_join(p2, &a2);

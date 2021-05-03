@@ -1,13 +1,16 @@
 
 #include <pthread.h>
 #include <threads.h>
+#include <signal.h>
 #include "../runtime/cilk2c.h"
 #include "../runtime/cilk2c_inlined.c"
 
 global_state *__cilkrts_startup(int argc, char *argv[]);
 void __cilkrts_shutdown(global_state *g);
 void signal_immediate_exception_to_all(__cilkrts_worker *const w);
+
 __thread int exit_res;
+global_state* cilk_rts_handle;
 
 /*
 **thrd_func that dont need changes**
@@ -24,26 +27,49 @@ struct cilk_thrd_args {
 
 typedef struct cilk_thrd_args cilk_thrd_args;
 
+void handle_sigint(int sig) {
+    sigset(sig, SIG_DFL);
+    write(1, "Hello\n", 6);
+    for (int w = 0; w < cilk_rts_handle->nworkers; w++) {
+        pthread_kill(cilk_rts_handle->threads[w], sig);
+    }
+    //exit(0);
+}
+
+void handle_sigint2(int sig) {
+    printf("it works!!\n");
+}
+
 static int cilkify_wrapper(void *arg) {
+    signal(1, handle_sigint); // TODO: forward signals to children
+
     cilk_thrd_args* args = (cilk_thrd_args*) arg;
+
+    // TODO: create runtime s.t. all runtime args can be passed in here, not just nworkers
     global_state *cilk_rts = __cilkrts_startup(args->num_workers,NULL);
+
+    // might be necessary to access rts_handle from outside this function so use TLS (for signal handling)
+    cilk_rts_handle = cilk_rts;
+
     __cilkrts_stack_frame sf;
-    __enter_cilk_region(cilk_rts, &sf);
+    __enter_cilk_region(cilk_rts, &sf); // cilkify; At this point a worker thread takes control
      
     int res;
-    __cilkrts_save_fp_ctrl_state(&sf);
+    __cilkrts_save_fp_ctrl_state(&sf); // store context here incase a worker needs to return via exit
     if(!__builtin_setjmp(sf.ctx)) {
         res = args->func(args->arg);
-    } else {
+    } else { // worker returns via exit
         res = exit_res;
-        __exit_cilk_region(cilk_rts, &sf);
+        __exit_cilk_region(cilk_rts, &sf); // uncilkify; orig boss thread takes control
         __cilkrts_shutdown(cilk_rts);
         free(args);
         thrd_exit(res); // to mirror effects of freeing tls as per spec
     }
     
-    __exit_cilk_region(cilk_rts, &sf);
+    // Normal return
+    __exit_cilk_region(cilk_rts, &sf); 
     __cilkrts_shutdown(cilk_rts);
+    
     free(args);
     return res;
 }
@@ -96,53 +122,47 @@ void cilk_thrd_exit(int res) {
     __builtin_longjmp(sf->ctx, 1);
 }
 
+// Sets exception for all workers, except for the calling worker
+// used to trigger other workers to do specific actions (yield or sleep)
 void signal_immediate_exception_to_all(__cilkrts_worker *const w) {
     int i, active_size = w->g->nworkers;
     __cilkrts_worker *curr_w;
 
     for(i=0; i<active_size; i++) {
+        if (i == w->self) continue;
         curr_w = w->g->workers[i];
         atomic_store_explicit(&curr_w->exc, EXCEPTION_INFINITY, memory_order_release);
     }
 }
 
-void reset_exception_to_all(__cilkrts_worker *const w) {
-    int i, active_size = w->g->nworkers;
-    __cilkrts_worker *curr_w;
-
-    for(i=0; i<active_size; i++) {
-        curr_w = w->g->workers[i];
-        atomic_store_explicit(&curr_w->exc,
-                              atomic_load_explicit(&curr_w->head, memory_order_relaxed),
-                              memory_order_release);
-    }
-}
-
+// Causes at least one worker thread to yield its timeslice
 void cilk_thrd_yield() {
     __cilkrts_worker *w = __cilkrts_get_tls_worker();
    
-    printf("about to signal all workers...\n");
-    // signal exception to all workers
-    
+    // maybe not necessary to lock? What is behavior if two parallel strands call yield/sleep at same time?
+    // Is it a data race? Should you linearize the sleeps? Let them race?
     pthread_mutex_lock(&(w->g->exit_lock));
-    
+   
+    // set YIELD flag to on while current worker yields. Is single global flag the best idea? Perhaps an array of flags?
     atomic_store_explicit(&w->g->thrd_call.type, THRD_YIELD, memory_order_relaxed);
-    signal_immediate_exception_to_all(w);
+    signal_immediate_exception_to_all(w); // exception reset in the handler
 
     thrd_yield();
-    
+
+    // reset flag back to NONE to make sure faulty yields don't occur
     atomic_store_explicit(&w->g->thrd_call.type, THRD_NONE, memory_order_relaxed);
-    reset_exception_to_all(w);
     
     pthread_mutex_unlock(&(w->g->exit_lock));
 }
 
+// Causes at least one worker thread to sleep for specified duration (doesn't handle signals yet)
+// Shares same concerns as yield, along with others
 int cilk_thrd_sleep(const struct timespec* time_point, struct timespec* remaining) {
     __cilkrts_worker *w = __cilkrts_get_tls_worker();
    
-    // signal exception to all workers
     pthread_mutex_lock(&(w->g->exit_lock));
     
+    // signal exception to all workers
     atomic_store_explicit(&w->g->thrd_call.type, THRD_SLEEP, memory_order_relaxed);
     w->g->thrd_call.time_point = time_point;
     signal_immediate_exception_to_all(w);
@@ -152,7 +172,6 @@ int cilk_thrd_sleep(const struct timespec* time_point, struct timespec* remainin
    
     w->g->thrd_call.time_point = NULL;
     atomic_store_explicit(&w->g->thrd_call.type, THRD_NONE, memory_order_relaxed);
-    //reset_exception_to_all(w);
     
     pthread_mutex_unlock(&(w->g->exit_lock));
 

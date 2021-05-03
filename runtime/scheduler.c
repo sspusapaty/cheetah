@@ -615,6 +615,20 @@ void Cilk_exception_handler(char *exn) {
     __cilkrts_stack_frame **tail =
         atomic_load_explicit(&w->tail, memory_order_relaxed);
 
+    int thrd_call_type = atomic_load_explicit(&w->g->thrd_call.type, memory_order_relaxed);
+    //printf("worker %d has thrd_call_type = %d!\n", w->self, thrd_call_type);
+    if (thrd_call_type == THRD_YIELD) {
+        thrd_yield();
+        //printf("worker %d yielded!\n", w->self);
+    } else if (thrd_call_type == THRD_SLEEP) {
+        const struct timespec* time_point = w->g->thrd_call.time_point;
+        //printf("worker %d tried to sleep!\n", w->self);
+        if (time_point) {
+            //printf("worker %d sleeping for %ld seconds!\n", w->self, time_point->tv_sec);
+            thrd_sleep(time_point, NULL);
+        }
+    }
+    
     if (head > tail) {
         cilkrts_alert(EXCEPT, w, "(Cilk_exception_handler) this is a steal!");
         if (NULL != exn)
@@ -630,19 +644,6 @@ void Cilk_exception_handler(char *exn) {
         longjmp_to_runtime(w); // NOT returning back to user code
 
     } else { // not steal, not abort; false alarm
-        int thrd_call_type = atomic_load_explicit(&w->g->thrd_call.type, memory_order_relaxed);
-        printf("worker %d has thrd_call_type = %d!\n", w->self, thrd_call_type);
-        if (thrd_call_type == THRD_YIELD) {
-            thrd_yield();
-            printf("worker %d yielded!\n", w->self);
-        } else if (thrd_call_type == THRD_SLEEP) {
-            const struct timespec* time_point = w->g->thrd_call.time_point;
-            printf("worker %d tried to sleep!\n", w->self);
-            if (time_point) {
-                printf("worker %d sleeping for %ld seconds!\n", w->self, time_point->tv_sec);
-                thrd_sleep(time_point, NULL);
-            }
-        }
         Closure_unlock(w, t);
         deque_unlock_self(w);
 
