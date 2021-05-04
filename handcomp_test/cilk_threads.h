@@ -29,8 +29,8 @@ struct cilk_thrd_args {
 typedef struct cilk_thrd_args cilk_thrd_args;
 
 void handle_sigint(int sig) {
-    sigset(sig, SIG_DFL);
-    write(1, "Hello\n", 6);
+    //sigset(sig, SIG_DFL);
+    //write(1, "Hello\n", 6);
     for (int w = 0; w < cilk_rts_handle->nworkers; w++) {
         pthread_kill(cilk_rts_handle->threads[w], sig);
     }
@@ -85,25 +85,9 @@ thrd_t cilk_thrd_current() {
     return w->boss;
 }
 
-// Doesn't work entirely. Either only 1 active worker needs to be guaranteed, or user has put appropriate
-// cancellation points
+// Doesn't work entirely. Can only be called when 1 active worker exists
 void cilk_thrd_exit(int res) {
     __cilkrts_worker *w = __cilkrts_get_tls_worker();
-    
-    while(!pthread_mutex_trylock(&(w->g->exit_lock))) { // in case other strands exit at the same time
-        pthread_testcancel(); // holding a mutex is not a cancellation point unfortunately
-    }
-    
-    // cancel all other threads
-    printf("thread %d is doing exit protocol\n", w->self);
-    for (unsigned i = 0; i < w->g->options.nproc; ++i) {
-        if (i != w->self){
-            printf("cancelling i=%d\n", i);
-            int s = pthread_cancel(w->g->threads[i]);
-            if (s != 0) printf("error cancelling thread %d\n",i);
-        }
-    }
-    pthread_mutex_unlock(&(w->g->exit_lock));
     
     // find the last stack frame **XXX has memory leak (doesnt destroy closures)**
     __cilkrts_stack_frame *sf = w->current_stack_frame;

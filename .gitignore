@@ -1,8 +1,8 @@
 # Exes
-handcomp_test/*
-!handcomp_test/*.*
 handcomp_test/thrd_tests/*
 !handcomp_test/thrd_tests/*.*
+handcomp_test/*
+!handcomp_test/*.*
 
 # Emacs backups
 *~

@@ -6,8 +6,8 @@ OBJS = $(patsubst %.c,%.o,$(SRCS))
 
 DEFINES = $(ABI_DEF)
 
-THRD_TESTS = thrd_tests/cilk_thrd_create thrd_tests/cilk_thrd_current_equals
-TESTS   = cilksort fib mm_dac nqueens cilk_threads_test $(THRD_TESTS)
+THRD_TESTS = thrd_tests/cilk_thrd_create thrd_tests/cilk_thrd_current_equals thrd_tests/cilk_thrd_sleep_yield thrd_tests/cilk_thrd_exit
+TESTS   = cilksort fib mm_dac nqueens $(THRD_TESTS)
 OPTIONS = $(OPT) $(ARCH) $(DBG) -Wall $(DEFINES) -fno-omit-frame-pointer
 # dynamic linking
 # RTS_DLIBS = -L../runtime -Wl,-rpath -Wl,../runtime -lopencilk
