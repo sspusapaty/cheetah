@@ -164,7 +164,6 @@ int cilk_thrd_sleep(const struct timespec* time_point, struct timespec* remainin
     w->g->thrd_call.time_point = time_point;
     signal_immediate_exception_to_all(w);
 
-    printf("worker %d sleeping for %ld seconds!\n", w->self, time_point->tv_sec);
     int res = thrd_sleep(time_point, remaining);
    
     w->g->thrd_call.time_point = NULL;
