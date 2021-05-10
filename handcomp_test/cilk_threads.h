@@ -91,7 +91,12 @@ void cilk_thrd_exit(int res) {
     
     // find the last stack frame **XXX has memory leak (doesnt destroy closures)**
     __cilkrts_stack_frame *sf = w->current_stack_frame;
-    while(!(sf->flags & CILK_FRAME_LAST)) sf = sf->call_parent;
+    while(!(sf->flags & CILK_FRAME_LAST)) {
+        __cilkrts_pop_frame(sf);
+        __cilkrts_leave_frame(sf);
+        sf = sf->call_parent;
+    }
+
     w->current_stack_frame = sf;
     sf->worker = w;
     
