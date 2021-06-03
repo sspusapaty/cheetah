@@ -1,8 +1,13 @@
 #pragma once
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <pthread.h>
 #include <threads.h>
 #include <signal.h>
+#include <stdatomic.h>
 #include "../runtime/cilk2c.h"
 #include "../runtime/cilk2c_inlined.c"
 
@@ -11,7 +16,6 @@ void __cilkrts_shutdown(global_state *g);
 void signal_immediate_exception_to_all(__cilkrts_worker *const w);
 
 __thread int exit_res;
-global_state* cilk_rts_handle;
 
 /*
 **thrd_func that dont need changes**
@@ -28,25 +32,11 @@ struct cilk_thrd_args {
 
 typedef struct cilk_thrd_args cilk_thrd_args;
 
-void handle_sigint(int sig) {
-    //sigset(sig, SIG_DFL);
-    //write(1, "Hello\n", 6);
-    for (int w = 0; w < cilk_rts_handle->nworkers; w++) {
-        pthread_kill(cilk_rts_handle->threads[w], sig);
-    }
-    //exit(0);
-}
-
 static int cilkify_wrapper(void *arg) {
-    //signal(1, handle_sigint); // TODO: forward signals to children
-    
     cilk_thrd_args* args = (cilk_thrd_args*) arg;
 
     // TODO: create runtime s.t. all runtime args can be passed in here, not just nworkers
     global_state *cilk_rts = __cilkrts_startup(args->num_workers,NULL);
-
-    // might be necessary to access rts_handle from outside this function so use TLS (for signal handling)
-    cilk_rts_handle = cilk_rts;
 
     __cilkrts_stack_frame sf;
     __enter_cilk_region(cilk_rts, &sf); // cilkify; At this point a worker thread takes control
@@ -85,11 +75,11 @@ thrd_t cilk_thrd_current() {
     return w->boss;
 }
 
-// Doesn't work entirely. Can only be called when 1 active worker exists
+// Can only be called when 1 active worker exists
 void cilk_thrd_exit(int res) {
     __cilkrts_worker *w = __cilkrts_get_tls_worker();
     
-    // find the last stack frame **XXX has memory leak (doesnt destroy closures)**
+    // find the last stack frame
     __cilkrts_stack_frame *sf = w->current_stack_frame;
     while(!(sf->flags & CILK_FRAME_LAST)) {
         __cilkrts_pop_frame(sf);
@@ -108,7 +98,7 @@ void cilk_thrd_exit(int res) {
     __builtin_longjmp(sf->ctx, 1);
 }
 
-// Sets exception for all workers, except for the calling worker
+// Sets THE exception for all workers, except for the calling worker
 // used to trigger other workers to do specific actions (yield or sleep)
 void signal_immediate_exception_to_all(__cilkrts_worker *const w) {
     int i, active_size = w->g->nworkers;
@@ -162,3 +152,30 @@ int cilk_thrd_sleep(const struct timespec* time_point, struct timespec* remainin
 
     return res;
 }
+
+struct cilk_mtx_t {
+    atomic_ulong owner; // holds thrd_t
+};
+
+typedef struct cilk_mtx_t cilk_mtx_t;
+
+int cilk_mtx_lock(cilk_mtx_t* mtx) {
+    thrd_t no_owner = 0;
+    while (!atomic_compare_exchange_strong(&(mtx->owner), &no_owner, cilk_thrd_current())){};
+    printf("%lu: LOCK mtx->owner = %lu\n", cilk_thrd_current(), mtx->owner);
+    return thrd_success;
+}
+
+int cilk_mtx_unlock(cilk_mtx_t* mtx) {
+    thrd_t curr_owner = cilk_thrd_current();
+    if (atomic_compare_exchange_strong(&(mtx->owner), &curr_owner, 0)) return thrd_success;
+    printf("%lu: UNLOCK mtx->owner = %lu\n", cilk_thrd_current(), mtx->owner);
+    return thrd_error;
+}
+
+int cilk_mtx_init(cilk_mtx_t* mtx) {
+    atomic_store(&(mtx->owner), 0);
+    return thrd_success;
+}
+
+

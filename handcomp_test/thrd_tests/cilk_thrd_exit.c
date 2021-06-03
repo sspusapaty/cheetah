@@ -57,6 +57,5 @@ int main(int argc, char** argv) {
 
     printf("Running thrd_exit tests...\n");
     run_test("one_thrd_create_join_success", one_thrd_create_join_success, 4);
-
     return 0;
 }

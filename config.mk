@@ -13,7 +13,7 @@ RTS_C_PERSONALITY_LIB=libopencilk-personality-c
 RTS_CXX_PERSONALITY_LIB=libopencilk-personality-cpp
 #RTS_LIB_FLAG=-lcheetah
 #ARCH = -mavx
-OPT = -O0
+OPT = -O1
 DBG = -g3
 # A large number of processors, system-dependent
 # TODO: There should be an additional value meaning "all cores"

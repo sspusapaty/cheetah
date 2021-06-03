@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "../cilk_threads.h"
+#include "../cilk_mutex.h"
 #define ZERO 0
 
 unsigned long long todval (struct timeval *tp) {
