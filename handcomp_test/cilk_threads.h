@@ -11,14 +11,6 @@ void __cilkrts_shutdown(global_state *g);
 void signal_immediate_exception_to_all(__cilkrts_worker *const w);
 
 __thread int exit_res;
-global_state* cilk_rts_handle;
-
-/*
-**thrd_func that dont need changes**
--- thrd_join(thrd_t thr, int *res )
--- thrd_detach(thrd_t thr)
--- thrd_equal(thrd_t lhs, thrd_t rhs)
-*/
 
 struct cilk_thrd_args {
     thrd_start_t func;
@@ -28,25 +20,11 @@ struct cilk_thrd_args {
 
 typedef struct cilk_thrd_args cilk_thrd_args;
 
-void handle_sigint(int sig) {
-    //sigset(sig, SIG_DFL);
-    //write(1, "Hello\n", 6);
-    for (int w = 0; w < cilk_rts_handle->nworkers; w++) {
-        pthread_kill(cilk_rts_handle->threads[w], sig);
-    }
-    //exit(0);
-}
-
 static int cilkify_wrapper(void *arg) {
-    //signal(1, handle_sigint); // TODO: forward signals to children
-    
     cilk_thrd_args* args = (cilk_thrd_args*) arg;
 
     // TODO: create runtime s.t. all runtime args can be passed in here, not just nworkers
     global_state *cilk_rts = __cilkrts_startup(args->num_workers,NULL);
-
-    // might be necessary to access rts_handle from outside this function so use TLS (for signal handling)
-    cilk_rts_handle = cilk_rts;
 
     __cilkrts_stack_frame sf;
     __enter_cilk_region(cilk_rts, &sf); // cilkify; At this point a worker thread takes control
@@ -85,11 +63,11 @@ thrd_t cilk_thrd_current() {
     return w->boss;
 }
 
-// Doesn't work entirely. Can only be called when 1 active worker exists
+// Can only be called when 1 active worker exists
 void cilk_thrd_exit(int res) {
     __cilkrts_worker *w = __cilkrts_get_tls_worker();
     
-    // find the last stack frame **XXX has memory leak (doesnt destroy closures)**
+    // find the last stack frame
     __cilkrts_stack_frame *sf = w->current_stack_frame;
     while(!(sf->flags & CILK_FRAME_LAST)) {
         __cilkrts_pop_frame(sf);
