@@ -1,0 +1,17 @@
+/home/ubuntu/opencilk-project/cheetah/glibc-2.31/build/dummy.o: \
+ /home/ubuntu/opencilk-project/cheetah/glibc-2.31/build/dummy.c \
+ ../include/stdc-predef.h \
+ /home/ubuntu/opencilk-project/cheetah/glibc-2.31/build/libc-modules.h \
+ ../include/libc-symbols.h \
+ /home/ubuntu/opencilk-project/cheetah/glibc-2.31/build/config.h \
+ ../sysdeps/generic/symbol-hacks.h
+
+../include/stdc-predef.h:
+
+/home/ubuntu/opencilk-project/cheetah/glibc-2.31/build/libc-modules.h:
+
+../include/libc-symbols.h:
+
+/home/ubuntu/opencilk-project/cheetah/glibc-2.31/build/config.h:
+
+../sysdeps/generic/symbol-hacks.h:

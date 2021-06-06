@@ -15,13 +15,15 @@ OPTIONS = $(OPT) $(ARCH) $(DBG) -Wall $(DEFINES) -fno-omit-frame-pointer
 # static linking
 RTS_LIBS = ../runtime/$(RTS_LIB).a
 TIMING_COUNT := 1
+GLIBC_LOC = ../glibc-2.31/build/install/lib
+GLIBC = -Wl,--rpath=$(GLIBC_LOC):/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu -Wl,--dynamic-linker=$(GLIBC_LOC)/ld-linux-x86-64.so.2
 
 .PHONY: all check memcheck clean
 
 all: $(TESTS)
 
 $(TESTS): %: %.o ktiming.o getoptions.o ZERO.o
-	$(CC) $^ -o $@ $(RTS_LIBS) -lrt -lpthread -lm
+	$(CC) $(GLIBC) $^ -o $@ $(RTS_LIBS) -lrt -lpthread -lm -lc
 
 %.o: %.c
 	$(CC) -c $(OPTIONS) -DTIMING_COUNT=$(TIMING_COUNT) -o $@ $<
