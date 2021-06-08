@@ -226,6 +226,7 @@ struct __cilkrts_worker {
 
     // Hold info of boss thread
     thrd_t boss;
+    pid_t boss_tid;
 };
 
 struct cilkrts_callbacks {

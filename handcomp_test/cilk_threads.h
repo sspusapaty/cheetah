@@ -1,8 +1,11 @@
 #pragma once
 
+#define _GNU_SOURCE
 #include <pthread.h>
 #include <threads.h>
 #include <signal.h>
+#include <dlfcn.h>
+#include <unistd.h>
 #include "../runtime/cilk2c.h"
 #include "../runtime/cilk2c_inlined.c"
 
@@ -140,3 +143,25 @@ int cilk_thrd_sleep(const struct timespec* time_point, struct timespec* remainin
 
     return res;
 }
+
+pid_t get_tid(void) {
+    return gettid();
+}
+
+int (*cilk_mtx_lock)(mtx_t*) = NULL;
+int (*cilk_mtx_unlock)(mtx_t*) = NULL;
+int (*cilk_mtx_trylock)(mtx_t*) = NULL;
+int (*cilk_mtx_timedlock)(mtx_t*, const struct timespec*) = NULL;
+
+void cilk_mtx_func_init(void) {
+    void (*reg_func)(__cilkrts_worker* (*f)(void));
+    reg_func = dlsym(RTLD_DEFAULT, "reg_function");
+    if (reg_func == NULL) printf("%s\n", dlerror());
+    reg_func(__cilkrts_get_tls_worker);
+    
+    cilk_mtx_lock = dlsym(RTLD_DEFAULT, "cilk_mtx_lock");
+    cilk_mtx_unlock = dlsym(RTLD_DEFAULT, "cilk_mtx_unlock");
+    cilk_mtx_trylock = dlsym(RTLD_DEFAULT, "cilk_mtx_trylock");
+    cilk_mtx_timedlock = dlsym(RTLD_DEFAULT, "cilk_mtx_timedlock");
+}
+

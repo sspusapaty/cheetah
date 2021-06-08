@@ -26,6 +26,7 @@
 #include <atomic.h>
 #include <futex-internal.h>
 #include <stap-probe.h>
+#include <stdio.h>
 
 #ifndef lll_lock_elision
 #define lll_lock_elision(lock, try_lock, private)	({ \
@@ -605,7 +606,6 @@ __pthread_mutex_lock_full (pthread_mutex_t *mutex)
 weak_alias (__pthread_mutex_lock, pthread_mutex_lock)
 hidden_def (__pthread_mutex_lock)
 #endif
-
 
 #ifdef NO_INCR
 void

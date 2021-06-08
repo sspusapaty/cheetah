@@ -33,6 +33,7 @@ function void thrd_yield (void)
 
 function int mtx_init (mtx_t*, int)
 function int mtx_lock (mtx_t*)
+function int cilk_mtx_lock (mtx_t*)
 function int mtx_timedlock (mtx_t*, const struct timespec*)
 function int mtx_trylock (mtx_t*)
 function int mtx_unlock (mtx_t*)

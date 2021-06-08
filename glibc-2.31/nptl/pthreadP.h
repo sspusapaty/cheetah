@@ -388,6 +388,10 @@ extern int __pthread_mutex_init (pthread_mutex_t *__mutex,
 extern int __pthread_mutex_destroy (pthread_mutex_t *__mutex);
 extern int __pthread_mutex_trylock (pthread_mutex_t *_mutex);
 extern int __pthread_mutex_lock (pthread_mutex_t *__mutex);
+extern int cilk_pthread_mutex_lock (pthread_mutex_t *__mutex);
+extern int cilk_pthread_mutex_unlock (pthread_mutex_t *__mutex);
+extern int cilk_pthread_mutex_trylock (pthread_mutex_t *__mutex);
+extern int cilk_pthread_mutex_timedlock (pthread_mutex_t *__mutex, const struct timespec *abstime);
 extern int __pthread_mutex_timedlock (pthread_mutex_t *__mutex,
      const struct timespec *__abstime);
 extern int __pthread_mutex_cond_lock (pthread_mutex_t *__mutex)

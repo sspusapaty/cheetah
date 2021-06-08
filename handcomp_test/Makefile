@@ -6,7 +6,7 @@ OBJS = $(patsubst %.c,%.o,$(SRCS))
 
 DEFINES = $(ABI_DEF)
 
-THRD_TESTS = thrd_tests/cilk_thrd_create thrd_tests/cilk_thrd_current_equals thrd_tests/cilk_thrd_sleep_yield thrd_tests/cilk_thrd_exit
+THRD_TESTS = thrd_tests/cilk_thrd_create thrd_tests/cilk_thrd_current_equals thrd_tests/cilk_thrd_sleep_yield thrd_tests/cilk_thrd_exit thrd_tests/cilk_mtx
 TESTS   = cilksort fib mm_dac nqueens $(THRD_TESTS)
 OPTIONS = $(OPT) $(ARCH) $(DBG) -Wall $(DEFINES) -fno-omit-frame-pointer
 # dynamic linking
@@ -23,7 +23,7 @@ GLIBC = -Wl,--rpath=$(GLIBC_LOC):/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu
 all: $(TESTS)
 
 $(TESTS): %: %.o ktiming.o getoptions.o ZERO.o
-	$(CC) $(GLIBC) $^ -o $@ $(RTS_LIBS) -lrt -lpthread -lm -lc
+	$(CC) $(GLIBC) $^ -o $@ $(RTS_LIBS) -ldl -lrt -lpthread -lm -lc
 
 %.o: %.c
 	$(CC) -c $(OPTIONS) -DTIMING_COUNT=$(TIMING_COUNT) -o $@ $<

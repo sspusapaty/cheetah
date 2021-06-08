@@ -73,7 +73,8 @@ static void workers_init(global_state *g) {
         w->self = i;
         w->g = g;
         w->l = worker_local_init(g);
-        w->boss = thrd_current();       
+        w->boss = thrd_current();
+        w->boss_tid = gettid();
         w->ltq_limit = w->l->shadow_stack + g->options.deqdepth;
         g->workers[i] = w;
         __cilkrts_stack_frame **init = w->l->shadow_stack + 1;

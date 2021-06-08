@@ -1037,7 +1037,7 @@ libpthread {
     flockfile; funlockfile; ftrylockfile;
     pthread_mutexattr_getkind_np; pthread_mutexattr_setkind_np;
     __pthread_mutex_init; __pthread_mutex_destroy;
-    __pthread_mutex_lock; __pthread_mutex_trylock; __pthread_mutex_unlock;
+    __pthread_mutex_lock; __pthread_mutex_trylock; __pthread_mutex_unlock; reg_function;
     __pthread_mutexattr_init; __pthread_mutexattr_destroy;
     __pthread_mutexattr_settype;
     __pthread_key_create; __pthread_getspecific; __pthread_setspecific;
@@ -1154,6 +1154,7 @@ libpthread {
   GLIBC_2.28 {
     thrd_create; thrd_detach; thrd_exit; thrd_join;
     mtx_init; mtx_lock; mtx_timedlock; mtx_trylock; mtx_unlock; mtx_destroy;
+    cilk_mtx_lock; cilk_mtx_unlock; cilk_mtx_trylock; cilk_mtx_timedlock;
     call_once; cnd_broadcast; cnd_destroy; cnd_init; cnd_signal;
     cnd_timedwait; cnd_wait; tss_create; tss_delete; tss_get; tss_set;
   }
@@ -1284,7 +1285,7 @@ libc {
   }
 }
 # 1 "sysdeps/x86/float128-abi.h" 1
-# 1271 "<stdin>" 2
+# 1272 "<stdin>" 2
 libc {
   GLIBC_2.0 {
      __mbrlen; __mbrtowc;
@@ -2497,7 +2498,7 @@ libc {
   GLIBC_2.2.4 {
     dl_iterate_phdr;
   }
-# 2491 "<stdin>"
+# 2492 "<stdin>"
   GLIBC_PRIVATE {
     _dl_addr;
     _dl_open_hook; _dl_open_hook2;
@@ -2709,7 +2710,7 @@ ld {
   }
 }
 # 1 "sysdeps/x86/float128-abi.h" 1
-# 2702 "<stdin>" 2
+# 2703 "<stdin>" 2
 
 
 

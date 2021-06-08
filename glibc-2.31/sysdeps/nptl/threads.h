@@ -130,6 +130,7 @@ extern int mtx_init (mtx_t *__mutex, int __type);
 /* Block the current thread until the mutex pointed to by __MUTEX is
    unlocked.  In that case current thread will not be blocked.  */
 extern int mtx_lock (mtx_t *__mutex);
+extern int cilk_mtx_lock (mtx_t *__mutex);
 
 /* Block the current thread until the mutex pointed by __MUTEX is unlocked
    or time pointed by __TIME_POINT is reached.  In case the mutex is unlock,

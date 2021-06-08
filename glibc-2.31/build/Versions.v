@@ -1015,7 +1015,7 @@ libpthread {
     flockfile; funlockfile; ftrylockfile;
     pthread_mutexattr_getkind_np; pthread_mutexattr_setkind_np;
     __pthread_mutex_init; __pthread_mutex_destroy;
-    __pthread_mutex_lock; __pthread_mutex_trylock; __pthread_mutex_unlock;
+    __pthread_mutex_lock; __pthread_mutex_trylock; __pthread_mutex_unlock; reg_function;
     __pthread_mutexattr_init; __pthread_mutexattr_destroy;
     __pthread_mutexattr_settype;
     __pthread_key_create; __pthread_getspecific; __pthread_setspecific;
@@ -1132,6 +1132,7 @@ libpthread {
   GLIBC_2.28 {
     thrd_create; thrd_detach; thrd_exit; thrd_join;
     mtx_init; mtx_lock; mtx_timedlock; mtx_trylock; mtx_unlock; mtx_destroy;
+    cilk_mtx_lock; cilk_mtx_unlock; cilk_mtx_trylock; cilk_mtx_timedlock;
     call_once; cnd_broadcast; cnd_destroy; cnd_init; cnd_signal;
     cnd_timedwait; cnd_wait; tss_create; tss_delete; tss_get; tss_set;
   }
