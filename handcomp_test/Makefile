@@ -28,21 +28,5 @@ $(TESTS): %: %.o ktiming.o getoptions.o ZERO.o
 %.o: %.c
 	$(CC) -c $(OPTIONS) -DTIMING_COUNT=$(TIMING_COUNT) -o $@ $<
 
-memcheck: 
-	$(MAKE) clean; $(MAKE) > /dev/null
-	date
-	CILK_NWORKERS=8 valgrind ./fib 26
-	CILK_NWORKERS=8 valgrind ./mm_dac -n 512
-	CILK_NWORKERS=8 valgrind ./cilksort -n 3000000
-	CILK_NWORKERS=8 valgrind ./nqueens 10
-	date
-
-check:
-	$(MAKE) clean; $(MAKE) TIMING_COUNT=5 > /dev/null
-	CILK_NWORKERS=$(MANYPROC) ./fib 40
-	CILK_NWORKERS=$(MANYPROC) ./mm_dac -n 1024 -c
-	CILK_NWORKERS=$(MANYPROC) ./cilksort -n 30000000 -c
-	CILK_NWORKERS=$(MANYPROC) ./nqueens 14
-
 clean:
 	rm -f thrd_tests/*.o *.o *~ $(TESTS) core.*
