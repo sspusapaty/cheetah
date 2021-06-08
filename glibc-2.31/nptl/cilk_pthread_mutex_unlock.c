@@ -29,12 +29,6 @@
 #define lll_unlock_elision(a,b,c) ({ lll_unlock (a,c); 0; })
 #endif
 
-__cilkrts_worker* (*get_cilk_worker)(void) = NULL;
-
-void reg_function(__cilkrts_worker* (*func)(void)) {
-    get_cilk_worker = func;
-}
-
 static int
 cilk_pthread_mutex_unlock_full (pthread_mutex_t *mutex, int decr)
      __attribute_noinline__;
@@ -43,6 +37,7 @@ int
 attribute_hidden
 cilk_pthread_mutex_unlock_usercnt (pthread_mutex_t *mutex, int decr)
 {
+  assert(get_boss_tid != NULL);
   /* See concurrency notes regarding mutex type which is loaded from __kind
      in struct __pthread_mutex_s in sysdeps/nptl/bits/thread-shared-types.h.  */
   int type = PTHREAD_MUTEX_TYPE_ELISION (mutex);
@@ -78,7 +73,7 @@ cilk_pthread_mutex_unlock_usercnt (pthread_mutex_t *mutex, int decr)
 			      == PTHREAD_MUTEX_RECURSIVE_NP, 1))
     {
       /* Recursive mutex.  */
-      if (mutex->__data.__owner != THREAD_GETMEM (THREAD_SELF, tid))
+      if (mutex->__data.__owner != get_boss_tid())
 	return EPERM;
 
       if (--mutex->__data.__count != 0)
@@ -93,7 +88,7 @@ cilk_pthread_mutex_unlock_usercnt (pthread_mutex_t *mutex, int decr)
     {
       /* Error checking mutex.  */
       assert (type == PTHREAD_MUTEX_ERRORCHECK_NP);
-      if (mutex->__data.__owner != THREAD_GETMEM (THREAD_SELF, tid)
+      if (mutex->__data.__owner != get_boss_tid()
 	  || ! lll_islocked (mutex->__data.__lock))
 	return EPERM;
       goto normal;
@@ -112,7 +107,7 @@ cilk_pthread_mutex_unlock_full (pthread_mutex_t *mutex, int decr)
     case PTHREAD_MUTEX_ROBUST_RECURSIVE_NP:
       /* Recursive mutex.  */
       if ((mutex->__data.__lock & FUTEX_TID_MASK)
-	  == THREAD_GETMEM (THREAD_SELF, tid)
+	  == get_boss_tid()
 	  && __builtin_expect (mutex->__data.__owner
 			       == PTHREAD_MUTEX_INCONSISTENT, 0))
 	{
@@ -123,7 +118,7 @@ cilk_pthread_mutex_unlock_full (pthread_mutex_t *mutex, int decr)
 	  goto notrecoverable;
 	}
 
-      if (mutex->__data.__owner != THREAD_GETMEM (THREAD_SELF, tid))
+      if (mutex->__data.__owner != get_boss_tid())
 	return EPERM;
 
       if (--mutex->__data.__count != 0)
@@ -136,7 +131,7 @@ cilk_pthread_mutex_unlock_full (pthread_mutex_t *mutex, int decr)
     case PTHREAD_MUTEX_ROBUST_NORMAL_NP:
     case PTHREAD_MUTEX_ROBUST_ADAPTIVE_NP:
       if ((mutex->__data.__lock & FUTEX_TID_MASK)
-	  != THREAD_GETMEM (THREAD_SELF, tid)
+	  != get_boss_tid()
 	  || ! lll_islocked (mutex->__data.__lock))
 	return EPERM;
 
@@ -188,7 +183,7 @@ cilk_pthread_mutex_unlock_full (pthread_mutex_t *mutex, int decr)
 #ifdef __NR_futex
     case PTHREAD_MUTEX_PI_RECURSIVE_NP:
       /* Recursive mutex.  */
-      if (mutex->__data.__owner != THREAD_GETMEM (THREAD_SELF, tid))
+      if (mutex->__data.__owner != get_boss_tid())
 	return EPERM;
 
       if (--mutex->__data.__count != 0)
@@ -199,7 +194,7 @@ cilk_pthread_mutex_unlock_full (pthread_mutex_t *mutex, int decr)
     case PTHREAD_MUTEX_PI_ROBUST_RECURSIVE_NP:
       /* Recursive mutex.  */
       if ((mutex->__data.__lock & FUTEX_TID_MASK)
-	  == THREAD_GETMEM (THREAD_SELF, tid)
+	  == get_boss_tid()
 	  && __builtin_expect (mutex->__data.__owner
 			       == PTHREAD_MUTEX_INCONSISTENT, 0))
 	{
@@ -210,7 +205,7 @@ cilk_pthread_mutex_unlock_full (pthread_mutex_t *mutex, int decr)
 	  goto pi_notrecoverable;
 	}
 
-      if (mutex->__data.__owner != THREAD_GETMEM (THREAD_SELF, tid))
+      if (mutex->__data.__owner != get_boss_tid())
 	return EPERM;
 
       if (--mutex->__data.__count != 0)
@@ -226,7 +221,7 @@ cilk_pthread_mutex_unlock_full (pthread_mutex_t *mutex, int decr)
     case PTHREAD_MUTEX_PI_ROBUST_NORMAL_NP:
     case PTHREAD_MUTEX_PI_ROBUST_ADAPTIVE_NP:
       if ((mutex->__data.__lock & FUTEX_TID_MASK)
-	  != THREAD_GETMEM (THREAD_SELF, tid)
+	  != get_boss_tid()
 	  || ! lll_islocked (mutex->__data.__lock))
 	return EPERM;
 
@@ -283,7 +278,7 @@ cilk_pthread_mutex_unlock_full (pthread_mutex_t *mutex, int decr)
       do
 	{
 	  if (((l & FUTEX_WAITERS) != 0)
-	      || (l != THREAD_GETMEM (THREAD_SELF, tid)))
+	      || (l != get_boss_tid()))
 	    {
 	      futex_unlock_pi ((unsigned int *) &mutex->__data.__lock,
 			       private);
@@ -302,7 +297,7 @@ cilk_pthread_mutex_unlock_full (pthread_mutex_t *mutex, int decr)
 
     case PTHREAD_MUTEX_PP_RECURSIVE_NP:
       /* Recursive mutex.  */
-      if (mutex->__data.__owner != THREAD_GETMEM (THREAD_SELF, tid))
+      if (mutex->__data.__owner != get_boss_tid())
 	return EPERM;
 
       if (--mutex->__data.__count != 0)
@@ -312,7 +307,7 @@ cilk_pthread_mutex_unlock_full (pthread_mutex_t *mutex, int decr)
 
     case PTHREAD_MUTEX_PP_ERRORCHECK_NP:
       /* Error checking mutex.  */
-      if (mutex->__data.__owner != THREAD_GETMEM (THREAD_SELF, tid)
+      if (mutex->__data.__owner != get_boss_tid()
 	  || (mutex->__data.__lock & ~ PTHREAD_MUTEX_PRIO_CEILING_MASK) == 0)
 	return EPERM;
       /* FALLTHROUGH */

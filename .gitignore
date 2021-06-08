@@ -14,6 +14,8 @@ handcomp_test/*
 thrd_tests/*.o
 thrd_tests/*.a
 
+glibc-2.31/build/*
+
 # lib 
 *.a
 *.so

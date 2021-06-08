@@ -74,7 +74,7 @@ libpthread-routines = nptl-init nptlfreeres vars events version pt-interp \
 		      pthread_mutexattr_setpshared \
 		      pthread_mutexattr_gettype pthread_mutexattr_settype \
 		      cilk_pthread_mutex_lock cilk_pthread_mutex_unlock \
-		      cilk_pthread_mutex_trylock cilk_pthread_mutex_timedlock \
+		      cilk_pthread_mutex_trylock cilk_pthread_mutex_timedlock cilk_structs \
 		      pthread_rwlock_init pthread_rwlock_destroy \
 		      pthread_rwlock_rdlock pthread_rwlock_timedrdlock \
 		      pthread_rwlock_clockrdlock \

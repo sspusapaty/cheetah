@@ -45,7 +45,9 @@ struct __cilkrts_worker {
 typedef struct __cilkrts_worker __cilkrts_worker;
 
 extern __cilkrts_worker* (*get_cilk_worker)(void);
+extern pid_t (*get_boss_tid)(void);
 
-extern void reg_function(__cilkrts_worker* (*func)(void));
+extern void reg_get_cilk_worker(__cilkrts_worker* (*func)(void));
+extern void reg_get_boss_tid(pid_t (*func)(void));
 
 #endif

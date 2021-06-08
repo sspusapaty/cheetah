@@ -1015,7 +1015,8 @@ libpthread {
     flockfile; funlockfile; ftrylockfile;
     pthread_mutexattr_getkind_np; pthread_mutexattr_setkind_np;
     __pthread_mutex_init; __pthread_mutex_destroy;
-    __pthread_mutex_lock; __pthread_mutex_trylock; __pthread_mutex_unlock; reg_function;
+    __pthread_mutex_lock; __pthread_mutex_trylock; __pthread_mutex_unlock;
+    reg_get_cilk_worker; reg_get_boss_tid;
     __pthread_mutexattr_init; __pthread_mutexattr_destroy;
     __pthread_mutexattr_settype;
     __pthread_key_create; __pthread_getspecific; __pthread_setspecific;

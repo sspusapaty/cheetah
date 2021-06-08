@@ -45,6 +45,7 @@ static int cilk_pthread_mutex_lock_full (pthread_mutex_t *mutex)
 int
 cilk_pthread_mutex_lock (pthread_mutex_t *mutex)
 {
+  assert(get_boss_tid != NULL);
   /* See concurrency notes regarding mutex type which is loaded from __kind
      in struct __pthread_mutex_s in sysdeps/nptl/bits/thread-shared-types.h.  */
   unsigned int type = PTHREAD_MUTEX_TYPE_ELISION (mutex);
@@ -79,7 +80,7 @@ cilk_pthread_mutex_lock (pthread_mutex_t *mutex)
 			     == PTHREAD_MUTEX_RECURSIVE_NP, 1))
     {
       /* Recursive mutex.  */
-      pid_t id = get_cilk_worker()->boss_tid;
+      pid_t id = get_boss_tid();
 
       /* Check whether we already hold the mutex.  */
       if (mutex->__data.__owner == id)
@@ -128,7 +129,8 @@ cilk_pthread_mutex_lock (pthread_mutex_t *mutex)
     }
   else
     {
-      pid_t id = get_cilk_worker()->boss_tid;
+      pid_t id = get_boss_tid();
+      
       assert (PTHREAD_MUTEX_TYPE (mutex) == PTHREAD_MUTEX_ERRORCHECK_NP);
       /* Check whether we already hold the mutex.  */
       if (__glibc_unlikely (mutex->__data.__owner == id))
@@ -136,7 +138,7 @@ cilk_pthread_mutex_lock (pthread_mutex_t *mutex)
       goto simple;
     }
 
-  pid_t id = get_cilk_worker()->boss_tid;
+  pid_t id = get_boss_tid();
 
   /* Record the ownership.  */
   mutex->__data.__owner = id;
@@ -153,9 +155,8 @@ static int
 cilk_pthread_mutex_lock_full (pthread_mutex_t *mutex)
 {
   int oldval;
-  assert(get_cilk_worker != NULL);
-  pid_t id = get_cilk_worker()->boss_tid;
-  assert(id != get_cilk_worker()->boss_tid);
+  
+  pid_t id = get_boss_tid();
 
   switch (PTHREAD_MUTEX_TYPE (mutex))
     {

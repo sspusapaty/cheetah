@@ -1753,7 +1753,7 @@ libpthread  GLIBC_2.2.5     __libc_current_sigrtmin; __libc_current_sigrtmax;
 libpthread  GLIBC_2.2.5     __libpthread_version_placeholder;
 libpthread  GLIBC_2.2.5     __pthread_key_create; __pthread_getspecific; __pthread_setspecific;
 libpthread  GLIBC_2.2.5     __pthread_mutex_init; __pthread_mutex_destroy;
-libpthread  GLIBC_2.2.5     __pthread_mutex_lock; __pthread_mutex_trylock; __pthread_mutex_unlock; reg_function;
+libpthread  GLIBC_2.2.5     __pthread_mutex_lock; __pthread_mutex_trylock; __pthread_mutex_unlock;
 libpthread  GLIBC_2.2.5     __pthread_mutexattr_init; __pthread_mutexattr_destroy;
 libpthread  GLIBC_2.2.5     __pthread_mutexattr_settype;
 libpthread  GLIBC_2.2.5     __pthread_once; __pthread_atfork;
@@ -1818,6 +1818,7 @@ libpthread  GLIBC_2.2.5     pthread_spin_destroy; pthread_spin_init; pthread_spi
 libpthread  GLIBC_2.2.5     pthread_spin_trylock; pthread_spin_unlock;
 libpthread  GLIBC_2.2.5     pthread_yield;
 libpthread  GLIBC_2.2.5     raise;
+libpthread  GLIBC_2.2.5     reg_get_cilk_worker; reg_get_boss_tid;
 libpthread  GLIBC_2.2.5     sem_close; sem_open; sem_unlink;
 libpthread  GLIBC_2.2.5     sem_destroy; sem_getvalue; sem_init; sem_post; sem_trywait; sem_wait;
 libpthread  GLIBC_2.2.5     sem_destroy; sem_getvalue; sem_init; sem_post; sem_trywait; sem_wait;

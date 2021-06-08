@@ -49,7 +49,7 @@ cilk_pthread_mutex_clocklock_common (pthread_mutex_t *mutex,
 				  const struct timespec *abstime)
 {
   int oldval;
-  pid_t id = get_cilk_worker()->boss_tid;
+  pid_t id = get_boss_tid();
   int result = 0;
 
   /* We must not check ABSTIME here.  If the thread does not block

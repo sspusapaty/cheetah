@@ -36,7 +36,7 @@ int
 cilk_pthread_mutex_trylock (pthread_mutex_t *mutex)
 {
   int oldval;
-  pid_t id = get_cilk_worker()->boss_tid;
+  pid_t id = get_boss_tid();
 
   /* See concurrency notes regarding mutex type which is loaded from __kind
      in struct __pthread_mutex_s in sysdeps/nptl/bits/thread-shared-types.h.  */
