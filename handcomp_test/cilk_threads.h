@@ -124,7 +124,7 @@ void cilk_thrd_yield() {
 
 // Causes at least one worker thread to sleep for specified duration (doesn't handle signals yet)
 // Shares same concerns as yield, along with others
-int cilk_thrd_sleep(const struct timespec* time_point, struct timespec* remaining) {
+int cilk_thrd_sleep(struct timespec* time_point, struct timespec* remaining) {
     __cilkrts_worker *w = __cilkrts_get_tls_worker();
    
     pthread_mutex_lock(&(w->g->exit_lock));

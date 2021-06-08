@@ -1,3 +1,15 @@
+## Info to Setup for Cilk Stuff (mutexes...)
+Run
+```
+mkdir build
+cd build
+../configure --prefix=install/ --with-tls --enable-add-ons=nptl // creates installation directory inside build
+make -j `nproc`
+make -j `nproc` install
+```
+
+## Normal GLIBC Stuff
+
 This directory contains the sources of the GNU C Library.
 See the file "version.h" for what release version you have.
 
