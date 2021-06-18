@@ -6,7 +6,7 @@ OBJS = $(patsubst %.c,%.o,$(SRCS))
 
 DEFINES = $(ABI_DEF)
 
-THRD_TESTS = thrd_tests/cilk_thrd_create thrd_tests/cilk_thrd_current_equals thrd_tests/cilk_thrd_sleep_yield thrd_tests/cilk_thrd_exit thrd_tests/cilk_mtx
+THRD_TESTS = thrd_tests/cilk_thrd_create thrd_tests/cilk_thrd_current_equals thrd_tests/cilk_thrd_sleep_yield thrd_tests/cilk_thrd_exit thrd_tests/cilk_mtx thrd_tests/cilk_cnd
 TESTS   = cilksort fib mm_dac nqueens $(THRD_TESTS)
 OPTIONS = $(OPT) $(ARCH) $(DBG) -Wall $(DEFINES) -fno-omit-frame-pointer
 # dynamic linking

@@ -392,6 +392,14 @@ extern int cilk_pthread_mutex_lock (pthread_mutex_t *__mutex);
 extern int cilk_pthread_mutex_unlock (pthread_mutex_t *__mutex);
 extern int cilk_pthread_mutex_trylock (pthread_mutex_t *__mutex);
 extern int cilk_pthread_mutex_timedlock (pthread_mutex_t *__mutex, const struct timespec *abstime);
+extern int cilk_pthread_cond_wait (pthread_cond_t *cond, pthread_mutex_t *mutex);
+extern int cilk_pthread_cond_timedwait (pthread_cond_t *cond,
+				     pthread_mutex_t *mutex,
+				     const struct timespec *abstime);
+extern int cilk_pthread_mutex_unlock_usercnt (pthread_mutex_t *__mutex,
+					   int __decr) attribute_hidden;
+extern int cilk_pthread_mutex_cond_lock (pthread_mutex_t *__mutex)
+     attribute_hidden;
 extern int __pthread_mutex_timedlock (pthread_mutex_t *__mutex,
      const struct timespec *__abstime);
 extern int __pthread_mutex_cond_lock (pthread_mutex_t *__mutex)

@@ -154,6 +154,8 @@ int (*cilk_mtx_lock)(mtx_t*) = NULL;
 int (*cilk_mtx_unlock)(mtx_t*) = NULL;
 int (*cilk_mtx_trylock)(mtx_t*) = NULL;
 int (*cilk_mtx_timedlock)(mtx_t*, const struct timespec*) = NULL;
+int (*cilk_cnd_wait)(cnd_t*, mtx_t*) = NULL;
+int (*cilk_cnd_timedwait)(cnd_t*, mtx_t*, const struct timespec*) = NULL;
 
 void cilk_mtx_func_init(void) {
     void (*reg_get_cilk_worker)(__cilkrts_worker* (*f)(void));
@@ -170,5 +172,7 @@ void cilk_mtx_func_init(void) {
     cilk_mtx_unlock = dlsym(RTLD_DEFAULT, "cilk_mtx_unlock");
     cilk_mtx_trylock = dlsym(RTLD_DEFAULT, "cilk_mtx_trylock");
     cilk_mtx_timedlock = dlsym(RTLD_DEFAULT, "cilk_mtx_timedlock");
+    cilk_cnd_wait = dlsym(RTLD_DEFAULT, "cilk_cnd_wait");
+    cilk_cnd_timedwait = dlsym(RTLD_DEFAULT, "cilk_cnd_timedwait");
 }
 
